@@ -21,7 +21,6 @@ from RVGP.smoothing import vector_diffusion
 from RVGP.plotting import graph
 from RVGP.kernels import ManifoldKernel
 
-
 np.random.seed(0)
 
 # =============================================================================
