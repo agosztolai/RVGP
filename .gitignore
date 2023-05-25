@@ -1,1 +1,15 @@
 .DS_store
+*.pkl
+*.svg
+*.png
+build/
+data/
+myjob*
+*.c
+*.so
+*.pyo
+*.pyc
+.DS_Store
+__pycache__/
+*.egg
+*.egg-info/
