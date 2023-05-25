@@ -1,7 +1,7 @@
 # import numpy as np
 import tensorflow as tf
 import gpflow
-import warnings
+# import warnings
 
 
 class ManifoldKernel(gpflow.kernels.Kernel):

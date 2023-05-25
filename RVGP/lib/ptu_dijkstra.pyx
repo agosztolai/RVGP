@@ -13,6 +13,7 @@ import warnings
 
 import numpy as np
 from scipy import sparse
+import networkx as nx
 from scipy.sparse.csgraph._validation import validate_graph
 
 cimport cython
@@ -29,10 +30,7 @@ ITYPE = np.int32
 ctypedef np.int32_t ITYPE_t
 
 
-def tangent_frames(X,
-                 csgraph,
-                 d,
-                 K):
+def tangent_frames(X, G, d, K):
     """
     Algorithm for tangent frame computation.
 
@@ -41,7 +39,7 @@ def tangent_frames(X,
     X: numpy matrix
         (N, D) matrix of N input data points in D dimensional space sampling a
         lower dimensional manifold S
-    csgraph : sparse matrix
+    G : networkx graph object
         Distance weighted proximity graph of pointset X
     d : int
         Dimension of the manifold S
@@ -82,7 +80,8 @@ def tangent_frames(X,
             "Embedding dimension must be less or equal to the ambient "
             "dimension of input data"
         )
-
+        
+    csgraph = nx.adjacency_matrix(G, weight='weight')
     csgraph = validate_graph(csgraph, directed=True, dtype=DTYPE,
                              dense_output=False)
 
@@ -127,7 +126,7 @@ def tangent_frames(X,
         
         
 def connections(tangents,
-                csgraph,
+                G,
                 d):
     """
     Algorithm for tangent frame computation.
@@ -135,7 +134,7 @@ def connections(tangents,
     Parameters
     ----------
     tangents
-    csgraph : sparse matrix
+    G : networkx graph object
         Distance weighted proximity graph of pointset X
     d : int
         Dimension of the manifold S
@@ -160,6 +159,7 @@ def connections(tangents,
             "dimension of input data"
         )
 
+    csgraph = nx.adjacency_matrix(G, weight='weight')
     csgraph = validate_graph(csgraph, directed=True, dtype=DTYPE,
                              dense_output=False)
 

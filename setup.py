@@ -12,7 +12,8 @@ requirements = (
    'gpflow==2.6.5',
    'tensorflow==2.12.0',
    'tensorflow-probability==0.20.0',
-   'scikit-learn==1.2.2'
+   'scikit-learn==1.2.2',
+   'networkx==3.1'
 )
 
 setup(name='RVGP',

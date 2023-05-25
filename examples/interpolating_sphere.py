@@ -6,14 +6,14 @@ import gpflow
 
 from ptu_dijkstra import connections, tangent_frames  # isort:skip
 
-from misc import (sample_spherical, 
-                  furthest_point_sampling, 
-                  manifold_graph, 
-                  compute_connection_laplacian,
-                  compute_spectrum,
-                  sample_from_convex_hull,
-                  graph, 
-                  )
+from misc import sample_spherical
+from RVGP.geometry import (furthest_point_sampling, 
+                           manifold_graph, 
+                           compute_connection_laplacian,
+                           compute_spectrum,
+                           sample_from_convex_hull
+                           )
+from RVGP.plotting import graph
 
 
 # =============================================================================
@@ -26,11 +26,11 @@ X = X[sample_ind]
 # =============================================================================
 # Fit graph, tangent frames and connections
 # =============================================================================
-G, A = manifold_graph(X)
+G = manifold_graph(X)
 dim_emb = X.shape[1]
 dim_man = 2
-gauges, Sigma = tangent_frames(X, A, dim_man, 10)
-R = connections(gauges, A, dim_man)
+gauges, Sigma = tangent_frames(X, G, dim_man, 10)
+R = connections(gauges, G, dim_man)
 
 # =============================================================================
 # Eigendecomposition of connection Laplacian
