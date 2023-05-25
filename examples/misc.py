@@ -15,12 +15,11 @@ from numpy.linalg import inv
 
 # import pickle
 # import gpflow
-import warn
 import tensorflow as tf
 # import tensorflow_probability as tfp
 from scipy import sparse
 
-from tqdm import trange
+# from tqdm import trange
 
 
 from sklearn.neighbors import kneighbors_graph
@@ -158,7 +157,7 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     if n_eigenpairs is None:
         n_eigenpairs = laplacian.shape[0]
     if n_eigenpairs >= laplacian.shape[0]:
-        warn.warn("Number of features is greater than number of vertices. Number of features will be reduced.")
+        print("Number of features is greater than number of vertices. Number of features will be reduced.")
         n_eigenpairs = laplacian.shape[0]
 
     evals, evecs = tf.linalg.eigh(laplacian.toarray())
@@ -204,6 +203,7 @@ from sklearn.metrics import pairwise_distances
 def manifold_graph(X, typ = 'knn', n_neighbors=5):
     if typ == 'knn':
         A = kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski', p=2, metric_params=None, include_self=False, n_jobs=None)
+        A += sparse.eye(A.shape[0])
         G = nx.from_scipy_sparse_array(A)
         
     elif typ == 'affinity':
@@ -215,7 +215,7 @@ def manifold_graph(X, typ = 'knn', n_neighbors=5):
     node_attribute = {i: X[i] for i in G.nodes}
     nx.set_node_attributes(G, node_attribute, "pos")
 
-    return G
+    return G, A
 
 
 def furthest_point_sampling(x, N=None, stop_crit=0.1, start_idx=0):
@@ -259,16 +259,15 @@ def furthest_point_sampling(x, N=None, stop_crit=0.1, start_idx=0):
     return perm, lambdas
 
 
-def optimize_GPR(model, train_steps):
-    adam_opt = tf.optimizers.Adam()
-    adam_opt.minimize(loss=model.training_loss, var_list=model.trainable_variables)
+# def optimize_GPR(model, train_steps):
+#     adam_opt = tf.optimizers.Adam()
+#     adam_opt.minimize(loss=model.training_loss, var_list=model.trainable_variables)
 
-    t = trange(train_steps - 1)
-    for step in t:
-        adam_opt.minimize(model.training_loss, var_list=model.trainable_variables)
-        if step % 200 == 0:
-            t.set_postfix({'likelihood': -model.training_loss().numpy()})
-            
+#     t = trange(train_steps - 1)
+#     for step in t:
+#         adam_opt.minimize(model.training_loss, var_list=model.trainable_variables)
+#         if step % 200 == 0:
+#             t.set_postfix({'likelihood': -model.training_loss().numpy()})
 
 
 def compute_connection_laplacian(G, R, normalization=None):

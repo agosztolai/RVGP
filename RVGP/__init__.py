@@ -1,1 +1,1 @@
-from graph_matern import inducing_variables, svgp, kernels
+from RVGP import inducing_variables, svgp, kernels

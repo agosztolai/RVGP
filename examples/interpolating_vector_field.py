@@ -2,13 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import networkx as nx
 import gpflow
-from scipy import sparse 
 
-import tensorflow as tf
-
-from ptu_dijkstra import connections, tangent_frames  # isort:skip
+from ptu_dijkstra import connections, tangent_frames
 
 from misc import (sample_spherical, 
                   furthest_point_sampling, 
@@ -24,7 +20,7 @@ from misc import (sample_spherical,
                   node_eigencoords
                   )
 
-from graph_matern.kernels import ManifoldKernel
+from RVGP.kernels import ManifoldKernel
 
 
 np.random.seed(0)
@@ -40,8 +36,7 @@ dim_emb = X.shape[1]
 # =============================================================================
 # Fit graph, tangent frames and connections
 # =============================================================================
-G = manifold_graph(X)
-A = nx.to_scipy_sparse_array(G) + sparse.eye(len(G))
+G, A = manifold_graph(X)
 dim_man = 2
 gauges, Sigma = tangent_frames(X, A, dim_man, 10)
 R = connections(gauges, A, dim_man)
@@ -84,8 +79,7 @@ ax.axis('equal')
 kernel = ManifoldKernel((evecs_Lc, evals_Lc), 
                         nu=3/2, 
                         kappa=5, 
-                        sigma_f=1, 
-                        dtype=tf.float64)
+                        sigma_f=1)
 
 # =============================================================================
 # Train GP for manifold

@@ -3,11 +3,8 @@
 
 import numpy as np
 import gpflow
-from scipy import sparse 
-import networkx as nx
 
 from ptu_dijkstra import connections, tangent_frames  # isort:skip
-
 
 from misc import (sample_spherical, 
                   furthest_point_sampling, 
@@ -29,8 +26,7 @@ X = X[sample_ind]
 # =============================================================================
 # Fit graph, tangent frames and connections
 # =============================================================================
-G = manifold_graph(X)
-A = nx.to_scipy_sparse_array(G) + sparse.eye(len(G))
+G, A = manifold_graph(X)
 dim_emb = X.shape[1]
 dim_man = 2
 gauges, Sigma = tangent_frames(X, A, dim_man, 10)
