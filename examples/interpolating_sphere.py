@@ -49,7 +49,13 @@ evecs_Lc = evecs_Lc.reshape(-1, n_eigenpairs)
 # =============================================================================
 x_train = evecs_Lc.reshape(-1, dim_emb*n_eigenpairs)
 y_train = X
-manifold_GP = gpflow.models.GPR((x_train, y_train), kernel=gpflow.kernels.RBF(), noise_variance=0.01)
+
+kernel = gpflow.kernels.RBF(dim_emb)
+# M = 50 # Number of inducing locations
+# Z = X[:M, :].copy() # Initialise inducing locations to the first M inputs in the dataset
+
+# manifold_GP = gpflow.models.VGP((x_train, y_train), kernel=kernel, likelihood=gpflow.likelihoods.Gaussian())
+manifold_GP = gpflow.models.GPR((x_train, y_train), kernel=kernel, noise_variance=0.01)
 
 opt = gpflow.optimizers.Scipy()
 opt.minimize(manifold_GP.training_loss, manifold_GP.trainable_variables)
@@ -63,3 +69,15 @@ y_pred_train, _ = manifold_GP.predict_f(x_test)
 ax = graph(G)
 ax.scatter(y_pred_train[:,0], y_pred_train[:,1], y_pred_train[:,2], c='r', s=20, alpha=0.3)
 ax.axis('equal')
+
+# import tensorflow as tf
+# y = y_train[[1]]
+# def loss() -> tf.Tensor:
+#     Y_predicted = manifold_GP.predict_f(x_initial)
+#     squared_error = (Y_predicted - tf.convert_to_tensor(y)) ** 2
+#     return tf.reduce_mean(squared_error)
+
+# # Use optimization to find the x that minimizes the objective function
+# x_initial = np.array(x_test[[0]])  # Initial guess for x
+# opt = gpflow.optimizers.Scipy()
+# result = opt.minimize(loss, variables=[tf.Variable(x_initial)])

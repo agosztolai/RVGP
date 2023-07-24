@@ -34,11 +34,7 @@ def sample_spherical(npoints, ndim=3):
 #     K_ss += 1e-8 * np.eye(len(K_ss))
 #     K_inv = inv(K)
     
-#     r, c = Y_train.shape
-#     Y_train = Y_train.reshape(-1,1)
 #     mu_s = K_s.T.dot(K_inv).dot(Y_train)
-#     mu_s = mu_s.reshape(-1, c)
-
 #     cov_s = K_ss - K_s.T.dot(K_inv).dot(K_s)
     
 #     return mu_s, cov_s
