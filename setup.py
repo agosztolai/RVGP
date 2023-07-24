@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-
 import numpy
 from Cython.Build import cythonize
 from setuptools import Extension
@@ -13,13 +12,14 @@ requirements = (
    'tensorflow==2.12.0',
    'tensorflow-probability==0.20.0',
    'scikit-learn==1.2.2',
-   'networkx==3.1'
+   'networkx==3.1',
+   'polyscope'
 )
 
 setup(name='RVGP',
       version='0.1',
       packages=find_packages(exclude=["examples*"]),
-      python_requires='>=3.6',
+      python_requires='>=3.6,<=3.9',
       install_requires=requirements,
       package_data={"RVGP.lib": ["ptu_dijkstra.pyx", "ptu_dijkstra.c"]},
       ext_modules=cythonize(
