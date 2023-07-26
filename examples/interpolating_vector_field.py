@@ -6,13 +6,20 @@ from RVGP.geometry import sample_from_neighbourhoods
 from RVGP.kernels import ManifoldKernel
 from RVGP import data, train_gp
 import polyscope as ps
+import numpy as np
 
 
 
-vertices, faces = load_mesh('torus')
+vertices, faces = load_mesh('bunny')
 dim_emb = vertices.shape[1]
 
-d = data(vertices, faces)
+n_vert = 100
+if len(vertices)>n_vert:
+    ind = np.random.choice(vertices.shape[0], n_vert, replace=False)
+else:
+    ind = np.arange(len(vertices))
+
+d = data(vertices[ind], faces[ind])
 d.random_vector_field()
 d.smooth_vector_field(t=100)
 
