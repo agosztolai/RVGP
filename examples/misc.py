@@ -2,39 +2,43 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import os
 
 
-def sample_spherical(npoints, ndim=3):
-    vec = np.random.randn(ndim, npoints)
-    vec /= np.linalg.norm(vec, axis=0)
-    return vec.T
+def load_mesh(data='bunny', folder='./data'):
+    # Initialize empty lists to store vertices and faces
+    vertices = []
+    faces = []
+    
+    file = os.path.join(folder,data)
 
+    # Open the text file in read mode
+    with open('{}.obj'.format(file), 'r') as file:
 
-# def posterior(kernel, X_s, X_train, Y_train, sigma_y=1e-8):
-#     """
-#     Computes the suffifient statistics of the posterior distribution 
-#     from m training data X_train and Y_train and n new inputs X_s.
+        # Loop through each line in the file
+        for line in file:
+
+            # Skip lines starting with '#'
+            if line.startswith('#'):
+                continue
+
+            # Split the line into words
+            words = line.split()
+
+            # Check if it starts with 'v' for vertices or 'f' for faces
+            if words[0] == 'v':
+                # Extract the numbers and convert them to floats
+                vertex = [float(words[1]), float(words[2]), float(words[3])]
+                # Append the vertex to the vertices list
+                vertices.append(vertex)
+            elif words[0] == 'f':
+                # Extract the numbers and convert them to integers
+                face = [int(words[1]), int(words[2]), int(words[3])]
+                # Append the face to the faces list
+                faces.append(face)
+
+    # Convert the lists to arrays
+    vertices = np.array(vertices)
+    faces = np.array(faces)-1
     
-#     Args:
-#         X_s: New input locations (n x d).
-#         X_train: Training locations (m x d).
-#         Y_train: Training targets (m x 1).
-#         l: Kernel length parameter.
-#         sigma_f: Kernel vertical variation parameter.
-#         sigma_y: Noise parameter.
-    
-#     Returns:
-#         Posterior mean vector (n x d) and covariance matrix (n x n).
-#     """
-        
-#     K = kernel.K(X_train, X_train).numpy()
-#     K += sigma_y**2 * np.eye(len(K))
-#     K_s = kernel.K(X_train, X_s).numpy()
-#     K_ss = kernel.K(X_s, X_s).numpy() 
-#     K_ss += 1e-8 * np.eye(len(K_ss))
-#     K_inv = inv(K)
-    
-#     mu_s = K_s.T.dot(K_inv).dot(Y_train)
-#     cov_s = K_ss - K_s.T.dot(K_inv).dot(K_s)
-    
-#     return mu_s, cov_s
+    return vertices, faces

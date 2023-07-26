@@ -90,30 +90,40 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     return evals, evecs
 
 
-def sample_from_convex_hull(points, num_samples, k=5):
+def sample_from_convex_hull(points, n=10):
+    """Draw n samples from the convex hull of points"""
     
-    tree = scipy.spatial.KDTree(points)
-    
-    if num_samples > len(points):
-        num_samples = len(points)
-    
-    sample_points = np.random.choice(len(points), size=num_samples, replace=False)
-    sample_points = points[sample_points]
 
-    # Generate samples
     samples = []
-    for current_point in sample_points:
-        _, nn_ind = tree.query(current_point, k=k, p=2)
-        nn_hull = points[nn_ind]
+    for current_point in range(n):
         
-        barycentric_coords = np.random.uniform(size=nn_hull.shape[0])
+        barycentric_coords = np.random.uniform(size=len(points))
         barycentric_coords /= np.sum(barycentric_coords)
         
-        current_point = np.sum(nn_hull.T * barycentric_coords, axis=1)
+        current_point = np.sum(points.T * barycentric_coords, axis=1)
 
         samples.append(current_point)
 
     return np.array(samples)
+
+
+def sample_from_neighbourhoods(points, n=1, k=2):
+    """Draw n samples from the convex hull formed by the k-neigheighbourds of
+    each point"""
+    
+    tree = scipy.spatial.KDTree(points)
+
+    # Generate samples
+    samples = []
+    for current_point in points:
+        _, nn_ind = tree.query(current_point, k=k, p=2)
+        nn_hull = points[nn_ind]
+        
+        sample = sample_from_convex_hull(nn_hull, n=n)
+
+        samples.append(sample)
+
+    return np.vstack(samples)
 
 
 def manifold_graph(X, typ = 'knn', n_neighbors=5):
@@ -186,14 +196,3 @@ def project_to_local_frame(x, gauges, reverse=False):
         return np.einsum("bji,bi->bj", gauges, x)
     else:
         return np.einsum("bij,bi->bj", gauges, x)
-
-
-def local_to_global(x, gauges):
-    return np.einsum("bj,bij->bi", x, gauges)
-
-
-def node_eigencoords(node_ind, evecs_Lc, dim):
-    r, c = evecs_Lc.shape
-    evecs_Lc = evecs_Lc.reshape(-1, c*dim)
-    node_coords = evecs_Lc[node_ind]
-    return node_coords.reshape(-1, c)

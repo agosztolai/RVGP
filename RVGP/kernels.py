@@ -1,7 +1,6 @@
 # import numpy as np
 import tensorflow as tf
 import gpflow
-# import warnings
 
 
 class ManifoldKernel(gpflow.kernels.Kernel):
@@ -23,8 +22,10 @@ class ManifoldKernel(gpflow.kernels.Kernel):
         type of tensors, tf.float64 by default
         """
 
-    def __init__(self, eigenpairs, nu=3, kappa=4, sigma_f=1, dtype=tf.float64):
+    def __init__(self, eigenpairs, nu=3, kappa=4, sigma_f=1, typ='matern'):
 
+        dtype=tf.float64
+        
         self.eigenvectors, self.eigenvalues = eigenpairs
         self.num_verticies = tf.cast(tf.shape(self.eigenvectors)[0], dtype=dtype)
         self.dtype = dtype
@@ -32,16 +33,19 @@ class ManifoldKernel(gpflow.kernels.Kernel):
         self.nu = gpflow.Parameter(nu, dtype=self.dtype, transform=gpflow.utilities.positive(), name='nu')
         self.kappa = gpflow.Parameter(kappa, dtype=self.dtype, transform=gpflow.utilities.positive(), name='kappa')
         self.sigma_f = gpflow.Parameter(sigma_f, dtype=self.dtype, transform=gpflow.utilities.positive(), name='sigma_f')
+        
+        self.typ = 'matern'
+        
         super().__init__()
 
     def eval_S(self, typ = 'matern'):
         """Wilson Eq. (69)"""
-        if typ == 'matern':
+        if self.typ == 'matern':
             S = tf.pow(self.eigenvalues + 2*self.nu/self.kappa**2, -self.nu)
             S = tf.multiply(S, self.num_verticies/tf.reduce_sum(S))
             S = tf.multiply(S, self.sigma_f)
             
-        elif typ == 'SE':
+        elif self.typ == 'SE':
             S = tf.exp(-0.5*self.eigenvalues*self.kappa)
             S = tf.multiply(S, self.num_verticies/tf.reduce_sum(S))
             S = tf.multiply(S, self.sigma_f)
