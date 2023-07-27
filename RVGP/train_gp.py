@@ -62,8 +62,8 @@ def train_gp(input,
             likelihood=gpflow.likelihoods.Gaussian(num_latent_gps),
             inducing_variable=inducing_points, #inducing_variable=[0]*num_eigenpairs,
             num_latent_gps=num_latent_gps,
-            # whiten=True,
-            # q_diag=True,
+            whiten=True,
+            q_diag=True,
         )
         
         logf, GP = run_adam(GP, data_train, epochs, ADAM_step=ADAM_step, batch_size=batch_size)
