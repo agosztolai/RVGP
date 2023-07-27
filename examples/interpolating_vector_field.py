@@ -6,30 +6,29 @@ from RVGP.geometry import sample_from_neighbourhoods
 from RVGP.kernels import ManifoldKernel
 from RVGP import data, train_gp
 import polyscope as ps
-import numpy as np
 
-
-
-vertices, faces = load_mesh('bunny')
+# Load mesh
+vertices, faces = load_mesh('torus')
 dim_emb = vertices.shape[1]
 
-n_vert = 100
-if len(vertices)>n_vert:
-    ind = np.random.choice(vertices.shape[0], n_vert, replace=False)
-else:
-    ind = np.arange(len(vertices))
+# Form data object
+d = data(vertices, faces)
 
-d = data(vertices[ind], faces[ind])
+# Generate smooth vector field
 d.random_vector_field()
 d.smooth_vector_field(t=100)
 
+# Train GP mapping from spectral space to manifold
 sp_to_manifold_gp = train_gp(d.evecs_Lc.reshape(d.n, -1),
                              d.vertices,
+                             variational=True,
+                             epochs=200,
                              noise_variance=0.001)
 
+# Train GP mapping from spectral space to tangent bundle
 kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
                         nu=3/2, 
-                        kappa=5, 
+                        kappa=5,
                         sigma_f=1)
 
 sp_to_vector_field_gp = train_gp(d.evecs_Lc.reshape(d.n, -1), 
@@ -38,12 +37,14 @@ sp_to_vector_field_gp = train_gp(d.evecs_Lc.reshape(d.n, -1),
                                  kernel=kernel,
                                  noise_variance=0.001)
 
+# Evaluate GPs are linearly interpolated points in spectral space
 n_test = 2
 test_points = sample_from_neighbourhoods(d.evecs_Lc.reshape(d.n, -1), k=2, n=n_test)
 manifold_pred_mean, _ = sp_to_manifold_gp.predict_f(test_points)
 vector_field_pred_mean, _ = sp_to_vector_field_gp.predict_f(test_points.reshape(len(test_points)*d.vertices.shape[1], -1))
 vector_field_pred_mean = vector_field_pred_mean.numpy().reshape(len(test_points), -1)
 
+# Create fancy plot using polyscope
 ps.init()
 ps_mesh = ps.register_surface_mesh("Surface points", vertices, faces)
 ps_cloud = ps.register_point_cloud("Training points", d.vertices)
