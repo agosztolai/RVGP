@@ -80,12 +80,11 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
         print("Number of features is greater than number of vertices. Number of features will be reduced.")
         n_eigenpairs = laplacian.shape[0]
 
-    evals, evecs = tf.linalg.eigh(laplacian.toarray())
-    evals = evals[:n_eigenpairs]
+    evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs, which="SM")
     evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
 
     evals = tf.convert_to_tensor(evals, dtype=dtype)
-    evecs = tf.convert_to_tensor(evecs, dtype)
+    evecs = tf.convert_to_tensor(evecs, dtype=dtype)
     
     return evals, evecs
 
@@ -164,8 +163,6 @@ def furthest_point_sampling(x, N=None, stop_crit=0.1, start_idx=0):
     D = pairwise_distances(x)
     n = D.shape[0] if N is None else N
     diam = D.max()
-
-    start_idx = 5
 
     perm = np.zeros(n, dtype=np.int32)
     perm[0] = start_idx

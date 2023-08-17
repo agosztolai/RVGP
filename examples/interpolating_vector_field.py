@@ -6,52 +6,23 @@ from RVGP.geometry import sample_from_neighbourhoods
 from RVGP.kernels import ManifoldKernel
 from RVGP import data, train_gp
 import polyscope as ps
-import numpy as np
 
 
-
-<<<<<<< HEAD
-vertices, faces = load_mesh('bunny')
-=======
 # Load mesh
 vertices, faces = load_mesh('torus')
->>>>>>> parent of 27a0a11... rewrite code using gpytorch
 dim_emb = vertices.shape[1]
 
-<<<<<<< HEAD
 # Form data object
-<<<<<<< HEAD
 d = data(vertices, faces, n_eigenpairs=10)
-=======
-n_vert = 100
-if len(vertices)>n_vert:
-    ind = np.random.choice(vertices.shape[0], n_vert, replace=False)
-else:
-    ind = np.arange(len(vertices))
->>>>>>> parent of 2111350... variational optimisation
-=======
-d = data(vertices, faces)
->>>>>>> parent of 27a0a11... rewrite code using gpytorch
 
-d = data(vertices[ind], faces[ind])
 d.random_vector_field()
 d.smooth_vector_field(t=100)
 
 sp_to_manifold_gp = train_gp(d.evecs_Lc.reshape(d.n, -1),
                              d.vertices,
-<<<<<<< HEAD
-<<<<<<< HEAD
-                             n_inducing_points=10,
-                             epochs=100
-                             )
-=======
+                             n_inducing_points=20,
+                             epochs=1000,
                              noise_variance=0.001)
->>>>>>> parent of 2111350... variational optimisation
-=======
-                             variational=True,
-                             epochs=200,
-                             noise_variance=0.001)
->>>>>>> parent of 27a0a11... rewrite code using gpytorch
 
 kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
                         nu=3/2, 
@@ -61,15 +32,10 @@ kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc),
 sp_to_vector_field_gp = train_gp(d.evecs_Lc.reshape(d.n, -1), 
                                  d.vectors,
                                  dim=d.vertices.shape[1],
-<<<<<<< HEAD
-                                 epochs=100,
-                                 n_inducing_points=None,
-                                 kernel=kernel
-                                 )
-=======
+                                 epochs=1000,
+                                 n_inducing_points=20,
                                  kernel=kernel,
                                  noise_variance=0.001)
->>>>>>> parent of 27a0a11... rewrite code using gpytorch
 
 n_test = 2
 test_points = sample_from_neighbourhoods(d.evecs_Lc.reshape(d.n, -1), k=2, n=n_test)
