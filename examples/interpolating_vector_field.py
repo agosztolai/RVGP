@@ -8,7 +8,7 @@ from RVGP import data, train_gp
 import polyscope as ps
 
 # Load mesh
-vertices, faces = load_mesh('bunny')
+vertices, faces = load_mesh('torus')
 dim_emb = vertices.shape[1]
 
 # Form data object
@@ -21,7 +21,6 @@ d.smooth_vector_field(t=100)
 # Train GP mapping from spectral space to manifold
 sp_to_manifold_gp = train_gp(d.evecs_Lc.reshape(d.n, -1),
                              d.vertices,
-                             variational=False,
                              n_inducing_points=10,
                              epochs=100
                              )
@@ -34,10 +33,9 @@ kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc),
 
 sp_to_vector_field_gp = train_gp(d.evecs_Lc.reshape(d.n, -1), 
                                  d.vectors,
-                                 variational=False,
                                  dim=d.vertices.shape[1],
                                  epochs=100,
-                                 n_inducing_points=10,
+                                 n_inducing_points=None,
                                  kernel=kernel
                                  )
 

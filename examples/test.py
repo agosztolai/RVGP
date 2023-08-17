@@ -1,125 +1,80 @@
-import math
+
 import torch
 import gpytorch
-import tqdm
-from matplotlib import pyplot as plt
+import tqdm as tqdm
+from math import floor
+from gpytorch.kernels import InducingPointKernel, MultitaskKernel
 
-train_x = torch.linspace(0, 1, 100)
 
-train_y = torch.stack([
-    torch.sin(train_x * (2 * math.pi)) + torch.randn(train_x.size()) * 0.2,
-    torch.cos(train_x * (2 * math.pi)) + torch.randn(train_x.size()) * 0.2,
-    torch.sin(train_x * (2 * math.pi)) + 2 * torch.cos(train_x * (2 * math.pi)) + torch.randn(train_x.size()) * 0.2,
-    -torch.cos(train_x * (2 * math.pi)) + torch.randn(train_x.size()) * 0.2,
-], -1)
+X, y = torch.randn(1000, 3), torch.randn(1000)
 
-train_x = torch.stack([train_x,train_x]).T
 
-print(train_x.shape, train_y.shape)
+train_n = int(floor(0.8 * len(X)))
+train_x = X[:train_n, :].contiguous()
+train_y = y[:train_n].contiguous()
+train_y = torch.stack([train_y, train_y]).T
 
-num_latents = 10
-num_tasks = 4
+test_x = X[train_n:, :].contiguous()
+test_y = y[train_n:].contiguous()
+test_y = torch.stack([test_y, test_y]).T
+
+if torch.cuda.is_available():
+    train_x, train_y, test_x, test_y = train_x.cuda(), train_y.cuda(), test_x.cuda(), test_y.cuda()
     
-class approximate_GP_model(gpytorch.models.ApproximateGP):
-    def __init__(self, inducing_points, kernel=None, batch_shape=1, num_latents=10):
-        # Let's use a different set of inducing points for each latent function
-        inducing_points = inducing_points.unsqueeze(0).repeat(num_latents, 1, 1)
 
-        # We have to mark the CholeskyVariationalDistribution as batch
-        # so that we learn a variational distribution for each task
-        variational_distribution = gpytorch.variational.CholeskyVariationalDistribution(
-            inducing_points.size(-2), batch_shape=torch.Size([num_latents])
+class GPRegressionModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super(GPRegressionModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.MultitaskMean(
+            gpytorch.means.ConstantMean(), num_tasks=2
         )
-
-        # We have to wrap the VariationalStrategy in a LMCVariationalStrategy
-        # so that the output will be a MultitaskMultivariateNormal rather than a batch output
-        variational_strategy = gpytorch.variational.LMCVariationalStrategy(
-            gpytorch.variational.VariationalStrategy(
-                self, inducing_points, variational_distribution, learn_inducing_locations=True
-            ),
-            num_tasks=batch_shape,
-            num_latents=num_latents,
-            latent_dim=-1
+        self.base_covar_module = MultitaskKernel(
+            gpytorch.kernels.RBFKernel(), num_tasks=2, rank=1
         )
-        
-        super(approximate_GP_model, self).__init__(variational_strategy)
-        self.mean_module = gpytorch.means.ConstantMean(batch_shape=torch.Size([num_latents]))
-        if kernel is None:
-            self.covar_module = gpytorch.kernels.ScaleKernel(
-                gpytorch.kernels.RBFKernel(batch_shape=torch.Size([num_latents])),
-                batch_shape=torch.Size([num_latents])
-            )
-        else:
-            self.covar_module = kernel
+        self.covar_module = InducingPointKernel(self.base_covar_module, inducing_points=train_x[:500, :].clone(), likelihood=likelihood)
 
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+        return gpytorch.distributions.MultitaskMultivariateNormal(mean_x, covar_x)
+    
+likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(num_tasks=2)
+model = GPRegressionModel(train_x, train_y, likelihood)
 
-    # def predict(self, x):
-    #     if isinstance(x, np.ndarray):
-    #         x = torch.tensor(x, dtype=torch.float32)
-    #     return self.likelihood(self(x))
-   
-import numpy as np   
-seed =0  
-rng = np.random.default_rng(seed)
-inducing_points = rng.choice(train_x, size=10, replace=False)
-inducing_points = torch.tensor(inducing_points, dtype=torch.float32)
-model = approximate_GP_model(inducing_points = inducing_points, 
-                             batch_shape=train_y.size(1), 
-                             num_latents=num_latents)
-likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(num_tasks=num_tasks)
+if torch.cuda.is_available():
+    model = model.cuda()
+    likelihood = likelihood.cuda()
+    
+training_iterations = 10
 
-num_epochs = 500
-
+# Find optimal model hyperparameters
 model.train()
 likelihood.train()
 
-optimizer = torch.optim.Adam([
-    {'params': model.parameters()},
-    {'params': likelihood.parameters()},
-], lr=0.1)
+# Use the adam optimizer
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-# Our loss object. We're using the VariationalELBO, which essentially just computes the ELBO
-mll = gpytorch.mlls.VariationalELBO(likelihood, model, num_data=train_y.size(0))
+# "Loss" for GPs - the marginal log likelihood
+mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
 
-# We use more CG iterations here because the preconditioner introduced in the NeurIPS paper seems to be less
-# effective for VI.
-epochs_iter = tqdm.tqdm(range(num_epochs), desc="Epoch")
-for i in epochs_iter:
-    # Within each iteration, we will go over each minibatch of data
+iterator = tqdm.tqdm(range(training_iterations), desc="Train")
+
+for i in iterator:
+    # Zero backprop gradients
     optimizer.zero_grad()
+    # Get output from model
     output = model(train_x)
+    # Calc loss and backprop derivatives
     loss = -mll(output, train_y)
-    epochs_iter.set_postfix(loss=loss.item())
     loss.backward()
+    iterator.set_postfix(loss=loss.item())
     optimizer.step()
-
-
+    torch.cuda.empty_cache()
+    
 model.eval()
 likelihood.eval()
-
-# Initialize plots
-fig, axs = plt.subplots(1, num_tasks, figsize=(4 * num_tasks, 3))
-
-# Make predictions
-with torch.no_grad(), gpytorch.settings.fast_pred_var():
-    test_x = torch.linspace(0, 1, 51)
-    test_x = torch.stack([test_x,test_x]).T
-
-    predictions = likelihood(model(test_x))
-    mean = predictions.mean
-    lower, upper = predictions.confidence_region()
-
-for task, ax in enumerate(axs):
-    # Plot training data as black stars
-    ax.plot(train_x.detach().numpy()[:,0], train_y[:, task].detach().numpy(), 'k*')
-    # Predictive mean as blue line
-    ax.plot(test_x.numpy()[:,0], mean[:, task].numpy(), 'b')
-    # Shade in confidence
-    ax.fill_between(test_x.numpy()[:,0], lower[:, task].numpy(), upper[:, task].numpy(), alpha=0.5)
-    ax.set_ylim([-3, 3])
-    ax.legend(['Observed Data', 'Mean', 'Confidence'])
-    ax.set_title(f'Task {task + 1}')
+with torch.no_grad():
+    preds = model.likelihood(model(test_x))
+    print('Test MAE: {}'.format(torch.mean(torch.abs(preds.mean - test_y))))
+    print('Test NLL: {}'.format(-preds.to_data_independent_dist().log_prob(test_y).mean().item()))
+        
