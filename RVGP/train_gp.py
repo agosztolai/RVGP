@@ -70,10 +70,10 @@ def run_adam(model, epochs, lr=0.001):
     
     if hasattr(model, 'log_marginal_likelihood'):
         loss_name = 'log_marginal_likelihood'
-        loss = tf.function(model.log_marginal_likelihood)
+        # loss = tf.function(model.log_marginal_likelihood)
     elif hasattr(model, 'elbo'):
         loss_name = 'ELBO'
-        loss = tf.function(model.elbo)
+        # loss = tf.function(model.elbo)
 
     @tf.function
     def optimization_step():
@@ -82,9 +82,9 @@ def run_adam(model, epochs, lr=0.001):
     for step in range(epochs):
         optimization_step()
         if step % 10 == 0:
-            elbo = -training_loss().numpy()
-            print(loss_name + ' : {}'.format(elbo))
-            logf.append(elbo)
+            loss = -training_loss().numpy()
+            print(loss_name + ' : {}'.format(loss))
+            logf.append(loss)
             
     return logf, model
 
