@@ -102,7 +102,7 @@ def train_gp(input,
 
         # test_dataset = TensorDataset(in_test, out_test)
         # test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-        
+
     mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, GP)
     optimizer = torch.optim.Adam(GP.parameters(), lr=lr)
     
