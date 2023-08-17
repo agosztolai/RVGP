@@ -11,9 +11,10 @@ from RVGP.geometry import (manifold_graph,
                            compute_connection_laplacian,
                            compute_spectrum,
                            project_to_local_frame,
-                           project_to_manifold,
-                           vector_diffusion
+                           project_to_manifold
                            )
+
+from RVGP.smoothing import vector_diffusion
 
 @dataclass
 class data:

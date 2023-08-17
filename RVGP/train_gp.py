@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+<<<<<<< HEAD
 import numpy as np
 from sklearn.model_selection import train_test_split
 import gpytorch
@@ -40,16 +41,29 @@ class GP_model(ExactGP):
         return self.likelihood(self(x))
         
     
+=======
+import gpflow
+import numpy as np
+from sklearn.model_selection import train_test_split
+
+
+>>>>>>> parent of 2111350... variational optimisation
 def train_gp(input, 
              output,
              likelihood=None,
              kernel=None,
              dim=1,
+<<<<<<< HEAD
              n_inducing_points=None,
              test_size=0.2, 
              epochs=100,
              lr=0.1,
              batch_size=100,
+=======
+             kernel=gpflow.kernels.RBF(),
+             noise_variance=0.001,
+             test_size=0.2, 
+>>>>>>> parent of 2111350... variational optimisation
              seed=0):
     
     #split training and test set
@@ -73,6 +87,7 @@ def train_gp(input,
                      out_train.view(out_train.shape[0]*dim, -1),
                      out_test.view(out_test.shape[0]*dim, -1))
     
+<<<<<<< HEAD
     if torch.cuda.is_available():
         in_train, out_train, in_test, out_test = \
                     (in_train.cuda(), 
@@ -135,6 +150,17 @@ def train_gp(input,
     
     return GP
         
+=======
+    #set up optimiser
+    GP = gpflow.models.GPR((in_train, out_train), 
+                           kernel=kernel, 
+                           noise_variance=noise_variance)
+
+    #optimise
+    opt = gpflow.optimizers.Scipy()
+    opt.minimize(GP.training_loss, GP.trainable_variables)
+    
+>>>>>>> parent of 2111350... variational optimisation
     #test
     out_pred, _ = GP.predict_f(in_test)
     l2_error = np.linalg.norm(out_test - out_pred.numpy(), axis=1).mean()
