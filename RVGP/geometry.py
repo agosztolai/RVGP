@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import math
 import numpy as np
 import scipy
 import networkx as nx
-import tensorflow as tf
+import torch
 from scipy import sparse
 
 from sklearn.metrics import pairwise_distances
@@ -72,7 +73,7 @@ def compute_connection_laplacian(G, R, normalization=None):
     return Lc
 
 
-def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
+def compute_spectrum(laplacian, n_eigenpairs=None, dtype=torch.float32):
     
     if n_eigenpairs is None:
         n_eigenpairs = laplacian.shape[0]
@@ -80,12 +81,11 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
         print("Number of features is greater than number of vertices. Number of features will be reduced.")
         n_eigenpairs = laplacian.shape[0]
 
-    evals, evecs = tf.linalg.eigh(laplacian.toarray())
-    evals = evals[:n_eigenpairs]
-    evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
-
-    evals = tf.convert_to_tensor(evals, dtype=dtype)
-    evecs = tf.convert_to_tensor(evecs, dtype)
+    evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs, which="SM")
+    evecs = evecs[:, :n_eigenpairs]/math.sqrt(len(evecs))
+    
+    evals = torch.tensor(evals, dtype=torch.float32)
+    evecs = torch.tensor(evecs, dtype=torch.float32)
     
     return evals, evecs
 
