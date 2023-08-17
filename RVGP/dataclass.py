@@ -22,6 +22,7 @@ class data:
                  vertices,
                  faces,
                  dim_man=2, 
+                 # explained_variance=0.9,
                  n_eigenpairs = 50):
         
         print('Fit graph')
@@ -37,7 +38,7 @@ class data:
         print('Compute eigendecompositions')
         evals_Lc, evecs_Lc = compute_spectrum(Lc, n_eigenpairs) # U\Lambda U^T
         #rather than U, take TU, where T is the local gauge
-        evecs_Lc = evecs_Lc.numpy().reshape(-1, dim_man, n_eigenpairs)
+        evecs_Lc = evecs_Lc.numpy().reshape(-1, dim_man,n_eigenpairs)
         evecs_Lc = np.einsum("bij,bjk->bik", gauges, evecs_Lc)
         evecs_Lc = evecs_Lc.reshape(-1, n_eigenpairs)
         
