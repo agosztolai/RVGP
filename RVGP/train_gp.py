@@ -17,7 +17,8 @@ def train_gp(input,
              kernel=gpflow.kernels.RBF(),
              noise_variance=0.001,
              epochs=100,
-             seed=0):
+             seed=0,
+             compute_error=True,):
     
     #split training and test set
     in_train, in_test, out_train, out_test = \
@@ -50,10 +51,11 @@ def train_gp(input,
     optimize_model_with_scipy(GP, epochs)
 
     #test
-    out_pred, _ = GP.predict_f(in_test)
-    l2_error = np.linalg.norm(out_test - out_pred.numpy(), axis=1).mean()
-    print("Relative l2 error is {}".format(l2_error))
-    
+    if compute_error:
+        out_pred, _ = GP.predict_f(in_test)
+        l2_error = np.linalg.norm(out_test - out_pred.numpy(), axis=1).mean()    
+        print("Relative l2 error is {}".format(l2_error))
+        
     return GP
 
 

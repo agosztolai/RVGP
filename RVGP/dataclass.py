@@ -20,7 +20,8 @@ from RVGP.smoothing import vector_diffusion
 class data:
     def __init__(self, 
                  vertices,
-                 faces,
+                 faces=None,
+                 vectors=None,
                  dim_man=2, 
                  # explained_variance=0.9,
                  n_eigenpairs = 50):
@@ -53,7 +54,8 @@ class data:
             self.L, 
             self.Lc,
             self.evals_Lc,
-            self.evecs_Lc   
+            self.evecs_Lc,  
+            self.vectors
         ) = (
                 vertices,
                 faces,
@@ -65,7 +67,8 @@ class data:
                 L, 
                 Lc,
                 evals_Lc,
-                evecs_Lc
+                evecs_Lc,
+                vectors
             )
         
     def random_vector_field(self, seed=0):

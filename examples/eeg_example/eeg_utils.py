@@ -17,11 +17,15 @@ from RVGP.geometry import (manifold_graph,
                            compute_spectrum,
                            project_to_manifold, 
                            project_to_local_frame,
-                           node_eigencoords
+                           #node_eigencoords
                            )
 from RVGP.smoothing import vector_diffusion
 from RVGP.plotting import graph
 from RVGP.kernels import ManifoldKernel
+
+from RVGP.geometry import sample_from_neighbourhoods
+from RVGP.kernels import ManifoldKernel
+from RVGP import data, train_gp
 
 from scipy.spatial import KDTree
 from tqdm import tqdm
@@ -29,9 +33,12 @@ from tqdm import tqdm
 
 def interpolate_time_range(timepoints, X, f, train_idx, test_idx,):
     
+    d = data(X, n_eigenpairs=10)
+    
     f_pred = np.zeros([len(timepoints), X.shape[0], X.shape[1]])
     for t, time in enumerate(tqdm(timepoints)):
-        f_pred[t,:,:] = interpolate_timepoint(X, f[int(time),:,:], train_idx, test_idx, project=False)
+        d.vectors = f[int(time),:,:]
+        f_pred[t,:,:] = interpolate_timepoint(d, train_idx, test_idx, project=False)
     
     return f_pred
 
@@ -77,8 +84,7 @@ def compute_vectorfield_features(positions, vectors, k=5):
     return div, curl
 
 
-def interpolate_timepoint(X,
-                          f,
+def interpolate_timepoint(d,
                           train_idx,
                           test_idx,
                           project=True,
@@ -89,53 +95,40 @@ def interpolate_timepoint(X,
                           n_eigenpairs = 50
                           ):
 
-    # Fit graph, tangent frames and connections
-    G = manifold_graph(X)
-    gauges, Sigma = tangent_frames(X, G, dim_man, 10)
-    R = connections(gauges, G, dim_man)
-
-    # Eigendecomposition of connection Laplacian
-    Lc = compute_connection_laplacian(G, R)
-
-    n_eigenpairs = 50
-    evals_Lc, evecs_Lc = compute_spectrum(Lc, n_eigenpairs) # U\Lambda U^T
-    
-    #rather than U, take TU, where T is the local gauge
-    evecs_Lc = evecs_Lc.numpy().reshape(-1, dim_man,n_eigenpairs)
-    evecs_Lc = np.einsum("bij,bjk->bik", gauges, evecs_Lc)
-    evecs_Lc = evecs_Lc.reshape(-1, n_eigenpairs)
        
     if project:
-        f = project_to_local_frame(f, gauges[train_idx,:,:])        
+        d.vectors = project_to_local_frame(d.vectors, d.gauges[train_idx,:,:])        
         
         if t>0:
             Lc_idx = np.sort(np.hstack([train_idx*2, train_idx*2+1]))
-            Lc_ = sp.bsr_matrix(Lc.A[Lc_idx,:][:,Lc_idx])            
-            L = compute_laplacian(G)
+            Lc_ = sp.bsr_matrix(d.Lc.A[Lc_idx,:][:,Lc_idx])            
+            L = compute_laplacian(d.G)
             L = L[train_idx,:][:, train_idx]            
-            f = vector_diffusion(f, t, L=L , Lc=Lc_, method="matrix_exp")
+            d.vectors = vector_diffusion(d.vectors, t, L=L , Lc=Lc_, method="matrix_exp")
             
-        f = project_to_local_frame(f, gauges[train_idx,:,:], reverse=True)
+        d.vectors = project_to_local_frame(d.vectors, d.gauges[train_idx,:,:], reverse=True)
     
-    # Custom kernel    
-    kernel = ManifoldKernel((evecs_Lc, evals_Lc), 
+    # Custom kernel   
+    kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
                             nu=3/2, 
                             kappa=5, 
-                            sigma_f=1)
-
-
+                            sigma_f=1)  
+    
     # Train GP for vector field over manifold
-    x_train_f = node_eigencoords(train_idx, evecs_Lc, dim_emb)
-    vector_field_GP = gpflow.models.GPR((x_train_f, f.reshape(-1, 1)), kernel=kernel, noise_variance=0.001)
-        
-    opt = gpflow.optimizers.Scipy()
-    opt.minimize(vector_field_GP.training_loss, vector_field_GP.trainable_variables)
+    x_train = d.evecs_Lc.reshape(d.n, -1)[train_idx,:]    
+    sp_to_vector_field_gp = train_gp(x_train, 
+                                     d.vectors,
+                                     dim=d.vertices.shape[1],
+                                     epochs=100,
+                                     kernel=kernel,
+                                     noise_variance=0.001,
+                                     compute_error=False)
+
            
     # Test performance   
-    test_idx = np.arange(len(X), dtype=int).reshape(-1, 1)
-    x_test_f = node_eigencoords(test_idx, evecs_Lc, dim_emb)    
-    f_pred, _ = vector_field_GP.predict_f(x_test_f) 
-    f_pred = f_pred.numpy().reshape(-1,dim_emb)    
+    x_test = d.evecs_Lc.reshape(d.n, -1)[test_idx,:]      
+    f_pred, _ = sp_to_vector_field_gp.predict_f(x_test.reshape(len(test_idx)*d.vertices.shape[1], -1))
+    f_pred = f_pred.numpy().reshape(len(test_idx), -1)    
     
     return f_pred
 
@@ -145,6 +138,13 @@ def compute_error(f_pred, f_real, test_idx, plot=False, verbose=False):
     if verbose:
         print("Relative l2 error is {}".format(l2_error)) 
     return l2_error
+
+def compute_error_time(f_pred, f_real, test_idx):      
+    squared_diffs = (f_real - f_pred) ** 2
+    sum_squared_diffs = np.einsum('ijk->i', squared_diffs)
+    l2_errors = np.sqrt(sum_squared_diffs)
+    return l2_errors
+
 
 def plot_predictions(X, f_pred, f_real, G):
     ax = graph(G)

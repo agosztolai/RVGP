@@ -12,6 +12,8 @@ from eeg_utils import load_eeg_data, interpolate_timepoint, compute_error
 from eeg_utils import plot_interpolation_topomap, interpolate_time_range
 from eeg_utils import compute_vectorfield_features, compute_vectorfield_features_time
 
+from RVGP import data
+
 np.random.seed(0)
 
 #%%
@@ -28,7 +30,7 @@ X = channel_locations_gt[['X','Y','Z']].values.astype(float)
 
 # define channels for training and testing model
 train_idx = np.where(channel_locations_gt.index.isin(channel_locations_ds.index))[0]
-test_idx = np.arange(len(X), dtype=int).reshape(-1, 1)
+test_idx = np.arange(len(X), dtype=int) # .reshape(-1, 1)
 
 # extract vectors only
 f_real = vectors_gt[:,:,1:]  # taking x,y,z
@@ -37,7 +39,10 @@ f_down = vectors_ds[:,:,1:]
 
 # run interpolation for a single time point
 t = 3000
-f_pred = interpolate_timepoint(X, f_down[t,:,:], train_idx, test_idx, project=False)
+
+d = data(X, vectors=f_down[t,:,:], n_eigenpairs=10)
+
+f_pred = interpolate_timepoint(d, train_idx, test_idx, project=False)
 l2_error = compute_error(f_pred, f_real[t,:,:], test_idx, verbose=True)
 l2_error = compute_error(f_spline[t,:,:], f_real[t,:,:], test_idx, verbose=True)
 
