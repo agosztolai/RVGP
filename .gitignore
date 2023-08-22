@@ -3,7 +3,6 @@
 *.svg
 *.png
 build/
-data/
 myjob*
 *.c
 *.so
