@@ -27,7 +27,7 @@ class ManifoldKernel(gpflow.kernels.Kernel):
         dtype=tf.float64
         
         self.eigenvectors, self.eigenvalues = eigenpairs
-        self.num_verticies = tf.cast(tf.shape(self.eigenvectors)[0], dtype=dtype)
+        self.num_vertices = tf.cast(tf.shape(self.eigenvectors)[0], dtype=dtype)
         self.dtype = dtype
 
         self.nu = gpflow.Parameter(nu, dtype=self.dtype, transform=gpflow.utilities.positive(), name='nu')
@@ -42,12 +42,12 @@ class ManifoldKernel(gpflow.kernels.Kernel):
         """Wilson Eq. (69)"""
         if self.typ == 'matern':
             S = tf.pow(self.eigenvalues + 2*self.nu/self.kappa**2, -self.nu)
-            S = tf.multiply(S, self.num_verticies/tf.reduce_sum(S))
+            S = tf.multiply(S, self.num_vertices/tf.reduce_sum(S))
             S = tf.multiply(S, self.sigma_f)
             
         elif self.typ == 'SE':
             S = tf.exp(-0.5*self.eigenvalues*self.kappa)
-            S = tf.multiply(S, self.num_verticies/tf.reduce_sum(S))
+            S = tf.multiply(S, self.num_vertices/tf.reduce_sum(S))
             S = tf.multiply(S, self.sigma_f)
         
         return S

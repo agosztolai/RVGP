@@ -23,11 +23,12 @@ class data:
                  faces=None,
                  vectors=None,
                  dim_man=2, 
+                 n_neighbors=5,
                  # explained_variance=0.9,
                  n_eigenpairs = 50):
         
         print('Fit graph')
-        G = manifold_graph(vertices)
+        G = manifold_graph(vertices,n_neighbors=n_neighbors)
         print('Fit tangent spaces and connections')
         gauges, Sigma = tangent_frames(vertices, G, dim_man, 10)
         R = connections(gauges, G, dim_man)

@@ -17,12 +17,13 @@ np.random.seed(0)
 def find_mat_files(directory):
     mat_files = {}
     for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith('.mat'):
-                #mat_file_path = os.path.join(root, file)
-                subdirectory_name = os.path.basename(root)
-                #mat_files.append((mat_file_path, subdirectory_name))
-                mat_files[subdirectory_name] = root +  '/'
+        if not 'results.mat' in files:
+            for file in files:
+                if file.endswith('flows.mat'):
+                    #mat_file_path = os.path.join(root, file)
+                    subdirectory_name = os.path.basename(root)
+                    #mat_files.append((mat_file_path, subdirectory_name))
+                    mat_files[subdirectory_name] = root +  '/'
     return mat_files
 
 directory = '/media/robert/PortableSSD/ResearchProjects/RVGP/data/eeg_data/all_patients/' # Replace with your directory path

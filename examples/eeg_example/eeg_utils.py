@@ -5,26 +5,15 @@ import pandas as pd
 import numpy as np
 
 
-import gpflow
 import mne
 
-
-from ptu_dijkstra import connections, tangent_frames
-
-from RVGP.geometry import (manifold_graph, 
-                           compute_laplacian,
-                           compute_connection_laplacian,
-                           compute_spectrum,
-                           project_to_manifold, 
+from RVGP.geometry import (compute_laplacian,
                            project_to_local_frame,
-                           #node_eigencoords
                            )
 from RVGP.smoothing import vector_diffusion
 from RVGP.plotting import graph
 from RVGP.kernels import ManifoldKernel
 
-from RVGP.geometry import sample_from_neighbourhoods
-from RVGP.kernels import ManifoldKernel
 from RVGP import data, train_gp
 
 from scipy.spatial import KDTree
@@ -52,6 +41,10 @@ def compute_vectorfield_features_time(timepoints, positions, vectors):
     return div, curl
 
 def compute_vectorfield_features(positions, vectors, k=5):
+    
+    # Normalize the vectors (interested in geometry of vector field - not magnitude)
+    magnitudes = np.linalg.norm(vectors, axis=1)
+    normalized_vectors = vectors / magnitudes[:, np.newaxis]
 
     # Build a KD-tree for efficient nearest neighbour search
     tree = KDTree(positions)       
@@ -68,7 +61,7 @@ def compute_vectorfield_features(positions, vectors, k=5):
         curl_estimate = np.zeros(3)
         for i in range(1, len(indices)):  # start from 1 to skip the point itself
             delta_position = positions[indices[i]] - point
-            delta_vector = vectors[indices[i]] - vectors[0]
+            delta_vector = normalized_vectors[indices[i]] - normalized_vectors[0]
             divergence_estimate += np.dot(delta_vector, delta_position) / np.linalg.norm(delta_position)**2
             curl_estimate += np.cross(delta_vector, delta_position) / np.linalg.norm(delta_position)**2
             
