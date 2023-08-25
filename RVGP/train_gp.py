@@ -14,7 +14,7 @@ def train_gp(input,
              n_inducing_points=None,
              test_size=0.2, 
              lr=0.1,
-             kernel=gpflow.kernels.RBF(),
+             kernel=None,
              noise_variance=0.001,
              epochs=1000,
              seed=0,
@@ -32,6 +32,9 @@ def train_gp(input,
     in_test = in_test.reshape(in_test.shape[0]*dim, -1)
     out_train = out_train.reshape(out_train.shape[0]*dim, -1)
     out_test = out_test.reshape(out_test.shape[0]*dim, -1)
+    
+    if kernel is None:
+        kernel = gpflow.kernels.RBF()
     
     if n_inducing_points is None:
         GP = gpflow.models.GPR((in_train, out_train), 

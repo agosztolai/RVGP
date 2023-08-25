@@ -52,18 +52,11 @@ vector_field_GP = train_gp(d.evecs_Lc.reshape(d.n, -1),
 # =============================================================================
 # Train GP for predicting spectral coordinates given some real point coordinates
 # =============================================================================
-manifold_GP_inv = gpflow.models.GPR((d.vertices, d.evecs_Lc.reshape(d.n, -1)),       
-                                    kernel=gpflow.kernels.RBF(), noise_variance=0.01)
-
-from RVGP.train_gp import optimize_model_with_scipy
-manifold_GP_inv = optimize_model_with_scipy(manifold_GP_inv, 1000)
-
-# manifold_GP_inv = train_gp(d.vertices,
-#                               d.evecs_Lc.reshape(d.n, -1),
-#                               # n_inducing_points=20,
-#                               epochs=1000,
-#                               noise_variance=0.01)
-
+manifold_GP_inv = train_gp(d.vertices,
+                              d.evecs_Lc.reshape(d.n, -1),
+                              # n_inducing_points=20,
+                              epochs=1000,
+                              noise_variance=0.01)
 
 # =============================================================================
 # Find trajectory in the vector field
