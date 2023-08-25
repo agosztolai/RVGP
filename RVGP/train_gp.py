@@ -16,7 +16,7 @@ def train_gp(input,
              lr=0.1,
              kernel=gpflow.kernels.RBF(),
              noise_variance=0.001,
-             epochs=100,
+             epochs=1000,
              seed=0,
              compute_error=True,):
     
@@ -48,7 +48,7 @@ def train_gp(input,
                                 inducing_variable=inducing_variable)
         
     # logf, GP = run_adam(GP, epochs, lr=lr)
-    optimize_model_with_scipy(GP, epochs)
+    GP = optimize_model_with_scipy(GP, epochs)
 
     #test
     if compute_error:
@@ -99,3 +99,4 @@ def optimize_model_with_scipy(model, epochs):
         method="l-bfgs-b",
         options={"disp": True, "maxiter": epochs},
     )
+    return model
