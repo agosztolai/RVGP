@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import gpflow
 from misc import load_mesh
 from RVGP.kernels import ManifoldKernel
 from RVGP import data, train_gp

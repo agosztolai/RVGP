@@ -41,8 +41,6 @@ def mesh_to_polyscope(mesh, wrap_x=True, wrap_y=True, reverse_x=False, reverse_y
             faces[i, j, 2] = coords[c3[0], c3[1]]
             faces[i, j, 3] = coords[c4[0], c4[1]]
 
-            # if i == (n - 1)
-
     mesh_ = mesh.reshape(-1, 3)
     faces_ = faces.reshape(-1, 4)
 

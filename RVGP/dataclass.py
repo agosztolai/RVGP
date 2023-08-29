@@ -25,7 +25,7 @@ class data:
                  dim_man=2, 
                  n_neighbors=5,
                  # explained_variance=0.9,
-                 n_eigenpairs = 50):
+                 n_eigenpairs=None):
         
         print('Fit graph')
         G = manifold_graph(vertices,n_neighbors=n_neighbors)
@@ -40,7 +40,9 @@ class data:
         print('Compute eigendecompositions')
         evals_Lc, evecs_Lc = compute_spectrum(Lc, n_eigenpairs) # U\Lambda U^T
         #rather than U, take TU, where T is the local gauge
-        evecs_Lc = evecs_Lc.numpy().reshape(-1, dim_man,n_eigenpairs)
+        if n_eigenpairs is None:
+            n_eigenpairs = evecs_Lc.shape[1]
+        evecs_Lc = evecs_Lc.numpy().reshape(-1, dim_man, n_eigenpairs)
         evecs_Lc = np.einsum("bij,bjk->bik", gauges, evecs_Lc)
         evecs_Lc = evecs_Lc.reshape(-1, n_eigenpairs)
         
