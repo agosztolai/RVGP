@@ -48,7 +48,7 @@ sample_ind, _ = furthest_point_sampling(X, stop_crit=0.03)
 X = X[sample_ind]
 f = f[sample_ind]
 
-d = data(X, vectors=f, dim_man=2, n_eigenpairs=300, n_neighbors=20,)
+d = data(X, vectors=f, dim_man=2, n_eigenpairs=100, n_neighbors=20,)
 
 # =============================================================================
 # Train GPs
