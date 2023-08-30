@@ -18,7 +18,7 @@ def train_gp(input,
              noise_variance=0.001,
              epochs=1000,
              seed=0,
-             compute_error=True,):
+             compute_error=True):
     
     #split training and test set
     in_train, in_test, out_train, out_test = \

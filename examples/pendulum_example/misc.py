@@ -49,6 +49,40 @@ def plot_vector_field(X,
     return ax
 
 
+def project_vectors_and_positions_onto_cylinder(positions, vectors):
+    n = positions.shape[0]
+    projected_vectors = np.zeros((n, 2))
+    projected_positions = np.zeros((n, 2))
+    
+    for i in range(n):
+        x, y, z = positions[i]
+        vector = vectors[i]
+
+        # Compute the angular coordinate theta
+        theta = np.arctan2(y, x)
+        
+        if theta < 0:
+            theta += 2 * np.pi
+
+        # Define the gauge directions
+        gauge_theta = np.array([-y, x, 0])
+        gauge_z = np.array([0, 0, 1])
+
+        # Normalize the gauge direction in the theta direction
+        gauge_theta /= np.linalg.norm(gauge_theta)
+
+        # Define the gauge matrix
+        gauge = np.column_stack((gauge_theta, gauge_z))
+
+        # Project the vector onto the gauge directions
+        projected_vector = np.dot(gauge.T, vector)
+
+        projected_vectors[i] = projected_vector
+        projected_positions[i] = [theta, z]
+
+    return projected_positions, projected_vectors
+
+
 def mesh_to_polyscope(mesh, wrap_x=True, wrap_y=True, reverse_x=False, reverse_y=False):
     n, m, _ = mesh.shape
 

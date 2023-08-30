@@ -77,15 +77,16 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     if n_eigenpairs is None:
         n_eigenpairs = laplacian.shape[0]
     if n_eigenpairs >= laplacian.shape[0]:
-        print("Number of features is greater than number of vertices. Number of features will be reduced.")
         n_eigenpairs = laplacian.shape[0]
 
-        evals, evecs = scipy.linalg.eigh(laplacian.todense())
-    else:
         
-        evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs, which="SM")
+    # else:
+    evals, evecs = scipy.linalg.eigh(laplacian.todense())
+    evals = evals[:n_eigenpairs]
+    evecs = evecs[:,:n_eigenpairs]
+    # evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs, which="SM")
     
-    evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
+    # evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
 
     evals = tf.convert_to_tensor(evals, dtype=dtype)
     evecs = tf.convert_to_tensor(evecs, dtype=dtype)
