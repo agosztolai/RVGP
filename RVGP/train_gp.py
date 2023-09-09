@@ -16,6 +16,8 @@ def train_gp(input,
              lr=0.1,
              kernel=None,
              noise_variance=0.001,
+             kernel_lengthscale=None,
+             kernel_variance=None,
              epochs=1000,
              seed=0,
              compute_error=True):
@@ -49,6 +51,14 @@ def train_gp(input,
                                 kernel=kernel, 
                                 noise_variance=noise_variance,
                                 inducing_variable=inducing_variable)
+        
+    if kernel_variance is not None:
+        kernel.variance.assign(kernel_variance)
+        gpflow.set_trainable(kernel.variance, False)
+        
+    if kernel_lengthscale is not None:
+        kernel.lengthscales.assign(kernel_lengthscale)
+        gpflow.set_trainable(kernel.lengthscales, False)
         
     # logf, GP = run_adam(GP, epochs, lr=lr)
     GP = optimize_model_with_scipy(GP, epochs)

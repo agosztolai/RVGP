@@ -72,6 +72,24 @@ def compute_connection_laplacian(G, R, normalization=None):
     return Lc
 
 
+# def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
+    
+#     if n_eigenpairs is None:
+#         n_eigenpairs = laplacian.shape[0]
+#     if n_eigenpairs >= laplacian.shape[0]:
+#         print("Number of features is greater than number of vertices. Number of features will be reduced.")
+#         n_eigenpairs = laplacian.shape[0]
+
+#     evals, evecs = tf.linalg.eigh(laplacian.toarray())
+#     evals = evals[:n_eigenpairs]
+#     evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
+
+#     evals = tf.convert_to_tensor(evals, dtype=dtype)
+#     evecs = tf.convert_to_tensor(evecs, dtype)
+    
+#     return evals, evecs
+
+
 def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     
     if n_eigenpairs is None:
@@ -79,14 +97,13 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     if n_eigenpairs >= laplacian.shape[0]:
         n_eigenpairs = laplacian.shape[0]
 
-        
-    # else:
-    evals, evecs = scipy.linalg.eigh(laplacian.todense())
-    evals = evals[:n_eigenpairs]
-    evecs = evecs[:,:n_eigenpairs]
-    # evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs, which="SM")
+    evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs+1, which="SM")
     
-    # evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
+    #eliminate trivial eigenvector
+    evals = evals[1:]
+    evecs = evecs[:,1:]
+    
+    evecs /= np.sqrt(len(evecs))
 
     evals = tf.convert_to_tensor(evals, dtype=dtype)
     evecs = tf.convert_to_tensor(evecs, dtype=dtype)
@@ -94,40 +111,30 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     return evals, evecs
 
 
-def sample_from_convex_hull(points, n=10):
-    """Draw n samples from the convex hull of points"""
+def sample_from_convex_hull(points, num_samples, k=5):
     
+    tree = scipy.spatial.KDTree(points)
+    
+    if num_samples > len(points):
+        num_samples = len(points)
+    
+    sample_points = np.random.choice(len(points), size=num_samples, replace=False)
+    sample_points = points[sample_points]
 
+    # Generate samples
     samples = []
-    for current_point in range(n):
+    for current_point in sample_points:
+        _, nn_ind = tree.query(current_point, k=k, p=2)
+        nn_hull = points[nn_ind]
         
-        barycentric_coords = np.random.uniform(size=len(points))
+        barycentric_coords = np.random.uniform(size=nn_hull.shape[0])
         barycentric_coords /= np.sum(barycentric_coords)
         
-        current_point = np.sum(points.T * barycentric_coords, axis=1)
+        current_point = np.sum(nn_hull.T * barycentric_coords, axis=1)
 
         samples.append(current_point)
 
     return np.array(samples)
-
-
-def sample_from_neighbourhoods(points, n=1, k=2):
-    """Draw n samples from the convex hull formed by the k-neigheighbourds of
-    each point"""
-    
-    tree = scipy.spatial.KDTree(points)
-
-    # Generate samples
-    samples = []
-    for current_point in points:
-        _, nn_ind = tree.query(current_point, k=k, p=2)
-        nn_hull = points[nn_ind]
-        
-        sample = sample_from_convex_hull(nn_hull, n=n)
-
-        samples.append(sample)
-
-    return np.vstack(samples)
 
 
 def manifold_graph(X, typ = 'knn', n_neighbors=5):
@@ -169,6 +176,8 @@ def furthest_point_sampling(x, N=None, stop_crit=0.1, start_idx=0):
     n = D.shape[0] if N is None else N
     diam = D.max()
 
+    start_idx = 5
+
     perm = np.zeros(n, dtype=np.int32)
     perm[0] = start_idx
     lambdas = np.zeros(n)
@@ -198,3 +207,14 @@ def project_to_local_frame(x, gauges, reverse=False):
         return np.einsum("bji,bi->bj", gauges, x)
     else:
         return np.einsum("bij,bi->bj", gauges, x)
+
+
+def local_to_global(x, gauges):
+    return np.einsum("bj,bij->bi", x, gauges)
+
+
+def node_eigencoords(node_ind, evecs_Lc, dim):
+    r, c = evecs_Lc.shape
+    evecs_Lc = evecs_Lc.reshape(-1, c*dim)
+    node_coords = evecs_Lc[node_ind]
+    return node_coords.reshape(-1, c)

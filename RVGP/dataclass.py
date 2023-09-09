@@ -38,6 +38,9 @@ class data:
         Lc = compute_connection_laplacian(G, R)
         
         print('Compute eigendecompositions')
+        evals_L, evecs_L = compute_spectrum(L, n_eigenpairs)
+        evals_L, evecs_L = evals_L, evecs_L.numpy()
+        
         evals_Lc, evecs_Lc = compute_spectrum(Lc, n_eigenpairs) # U\Lambda U^T
         #rather than U, take TU, where T is the local gauge
         if n_eigenpairs is None:
@@ -56,6 +59,8 @@ class data:
             self.R, 
             self.L, 
             self.Lc,
+            self.evals_L,
+            self.evecs_L,
             self.evals_Lc,
             self.evecs_Lc,  
             self.vectors
@@ -69,6 +74,8 @@ class data:
                 R, 
                 L, 
                 Lc,
+                evals_L,
+                evecs_L,
                 evals_Lc,
                 evecs_Lc,
                 vectors
