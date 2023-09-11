@@ -12,14 +12,12 @@ from sklearn.neighbors import kneighbors_graph
 
 
 
-def compute_laplacian(G, normalization=None):
+def compute_laplacian(G, normalization=False):
 
-    laplacian = sparse.csr_matrix(nx.laplacian_matrix(G), dtype=np.float64)
-
-    if normalization == "rw":
-        deg = np.array([G.degree[i] for i in G.nodes])
-        laplacian /= deg
-        laplacian = sparse.csr_matrix(laplacian, dtype=np.float64)
+    if normalization:
+        laplacian = sparse.csr_matrix(nx.normalized_laplacian_matrix(G), dtype=np.float64)
+    else:
+        laplacian = sparse.csr_matrix(nx.laplacian_matrix(G), dtype=np.float64)
     
     return laplacian
 
@@ -103,7 +101,7 @@ def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     evals = evals[1:]
     evecs = evecs[:,1:]
     
-    evecs /= np.sqrt(len(evecs))
+    evecs *= np.sqrt(len(evecs))
 
     evals = tf.convert_to_tensor(evals, dtype=dtype)
     evecs = tf.convert_to_tensor(evecs, dtype=dtype)

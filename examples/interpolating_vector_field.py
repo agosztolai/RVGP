@@ -5,14 +5,20 @@ from misc import load_mesh
 from RVGP.kernels import ManifoldKernel
 from RVGP import data, train_gp
 import polyscope as ps
+from RVGP.geometry import furthest_point_sampling
+
 
 # =============================================================================
 # Define manifold points
 # =============================================================================
-X, faces = load_mesh('sphere')
+vertices, faces = load_mesh('monkey')
 
-n_eigenpairs=10
-d = data(X, faces, n_eigenpairs=n_eigenpairs)
+sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.02)#, start_idx=start_idx)
+X = vertices[sample_ind]
+
+n_eigenpairs=20
+n_neighbors=10
+d = data(X, faces, n_eigenpairs=n_eigenpairs, n_neighbors=n_neighbors)
 
 d.random_vector_field()
 d.smooth_vector_field(t=100)
@@ -36,13 +42,13 @@ test_ind = train_ind
 # =============================================================================
 # Train GP for manifold
 # =============================================================================
-manifold_kernel = ManifoldKernel((d.evecs_L, d.evals_L), 
+manifold_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
                         nu=3/2, 
                         kappa=5, 
                         typ='se',
                         sigma_f=1.)
 
-manifold_GP = train_gp(d.evecs_L.reshape(d.n, -1)[train_ind],
+manifold_GP = train_gp(d.evecs_Lc.reshape(d.n, -1)[train_ind],
                               d.vertices[train_ind],
                               # n_inducing_points=20,
                                # kernel=manifold_kernel,
@@ -70,8 +76,7 @@ vector_field_GP = train_gp(d.evecs_Lc.reshape(d.n, -1)[train_ind],
 # =============================================================================
 # Make new predictions
 # =============================================================================
-x_test = d.evecs_L.reshape(-1, n_eigenpairs)
-# x_test = d.evecs_Lc.reshape(d.n, -1)
+x_test = d.evecs_Lc.reshape(d.n, -1)
 y_pred_mean, _ = manifold_GP.predict_f(x_test)
 
 x_test = d.evecs_Lc.reshape(-1, n_eigenpairs)
@@ -82,7 +87,7 @@ f_pred_mean = f_pred_mean.numpy().reshape(d.n,-1)
 # Plot
 # =============================================================================
 ps.init()
-ps_mesh = ps.register_surface_mesh("Surface points", X, faces)
+ps_mesh = ps.register_surface_mesh("Surface points", vertices, faces)
 ps_cloud = ps.register_point_cloud("Training points", d.vertices[train_ind])
 ps_cloud.add_vector_quantity("Training vectors", d.vectors[train_ind], color=(0., 0., 1.), enabled=True)
 ps_cloud = ps.register_point_cloud("Predicted points", y_pred_mean[test_ind])

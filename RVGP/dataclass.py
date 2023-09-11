@@ -24,13 +24,14 @@ class data:
                  vectors=None,
                  dim_man=2, 
                  n_neighbors=5,
+                 frac_geodesic_neighbours=1.5,
                  # explained_variance=0.9,
                  n_eigenpairs=None):
         
         print('Fit graph')
         G = manifold_graph(vertices,n_neighbors=n_neighbors)
         print('Fit tangent spaces and connections')
-        gauges, Sigma = tangent_frames(vertices, G, dim_man, 10)
+        gauges, Sigma = tangent_frames(vertices, G, dim_man, n_neighbors*frac_geodesic_neighbours)
         R = connections(gauges, G, dim_man)
         
         print('Compute Laplacians')
