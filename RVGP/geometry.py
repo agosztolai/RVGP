@@ -70,43 +70,43 @@ def compute_connection_laplacian(G, R, normalization=None):
     return Lc
 
 
-# def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
-    
-#     if n_eigenpairs is None:
-#         n_eigenpairs = laplacian.shape[0]
-#     if n_eigenpairs >= laplacian.shape[0]:
-#         print("Number of features is greater than number of vertices. Number of features will be reduced.")
-#         n_eigenpairs = laplacian.shape[0]
-
-#     evals, evecs = tf.linalg.eigh(laplacian.toarray())
-#     evals = evals[:n_eigenpairs]
-#     evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
-
-#     evals = tf.convert_to_tensor(evals, dtype=dtype)
-#     evecs = tf.convert_to_tensor(evecs, dtype)
-    
-#     return evals, evecs
-
-
 def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     
     if n_eigenpairs is None:
         n_eigenpairs = laplacian.shape[0]
     if n_eigenpairs >= laplacian.shape[0]:
+        print("Number of features is greater than number of vertices. Number of features will be reduced.")
         n_eigenpairs = laplacian.shape[0]
 
-    evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs+1, which="SM")
-    
-    #eliminate trivial eigenvector
-    evals = evals[1:]
-    evecs = evecs[:,1:]
-    
-    evecs *= np.sqrt(len(evecs))
+    evals, evecs = tf.linalg.eigh(laplacian.toarray())
+    evals = evals[:n_eigenpairs]
+    evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
 
     evals = tf.convert_to_tensor(evals, dtype=dtype)
-    evecs = tf.convert_to_tensor(evecs, dtype=dtype)
+    evecs = tf.convert_to_tensor(evecs, dtype)
     
     return evals, evecs
+
+
+# def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
+    
+#     if n_eigenpairs is None:
+#         n_eigenpairs = laplacian.shape[0]
+#     if n_eigenpairs >= laplacian.shape[0]:
+#         n_eigenpairs = laplacian.shape[0]
+
+#     evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs+1, which="SM")
+    
+#     #eliminate trivial eigenvector
+#     evals = evals[1:]
+#     evecs = evecs[:,1:]
+    
+#     evecs *= np.sqrt(len(evecs))
+
+#     evals = tf.convert_to_tensor(evals, dtype=dtype)
+#     evecs = tf.convert_to_tensor(evecs, dtype=dtype)
+    
+#     return evals, evecs
 
 
 def sample_from_convex_hull(points, num_samples, k=5):

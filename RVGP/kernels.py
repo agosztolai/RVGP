@@ -66,38 +66,3 @@ class ManifoldKernel(gpflow.kernels.Kernel):
         
         S = self.eval_S(typ=self.typ)
         return tf.reduce_sum(tf.transpose(X * S) * tf.transpose(X), axis=0)
-
-    # def sample(self, X):
-    #     K_chol = tf_jitchol(self.K(X), dtype=self.dtype)
-    #     sample = K_chol.dot(np.random.randn(tf.shape(K_chol)[0]))
-        
-    #     return sample
-    
-    
-# def tf_jitchol(mat, jitter=0, dtype=tf.float32):
-#     """Run Cholesky decomposition with an increasing jitter,
-#     until the jitter becomes too large.
-#     Arguments
-#     ---------
-#     mat : (m, m) tf.Tensor
-#         Positive-definite matrix
-#     jitter : float
-#         Initial jitter
-#     """
-#     try:
-#         chol = tf.linalg.cholesky(mat)
-        
-#         return chol
-    
-#     except:
-#         new_jitter = jitter*10.0 if jitter > 0.0 else 1e-15
-#         if new_jitter > 1.0:
-#             raise RuntimeError('Matrix not positive definite even with jitter')
-#         warnings.warn(
-#             'Matrix not positive-definite, adding jitter {:e}'
-#             .format(new_jitter),
-#             RuntimeWarning)
-#         new_jitter = tf.cast(new_jitter, dtype=dtype)
-        
-#         return tf_jitchol(mat + tf.multiply(new_jitter, tf.eye(mat.shape[-1], dtype=dtype)), new_jitter)
-

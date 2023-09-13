@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
-from RVGP.plotting import graph
 from misc import load_mesh
 from RVGP.geometry import furthest_point_sampling
 from RVGP import data, train_gp
 from RVGP.kernels import ManifoldKernel
-
 import polyscope as ps
 
-
-vertices, faces = load_mesh('monkey')
-
-sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.015)#, start_idx=start_idx)
-X = vertices[sample_ind]
-
+# =============================================================================
+# Parameters and data
+# =============================================================================
 n_eigenpairs=20
 n_neighbors=10
+vertices, faces = load_mesh('monkey')
+
+# =============================================================================
+# Subsample and create data object
+# =============================================================================
+sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.015)
+X = vertices[sample_ind]
 d = data(X, faces, n_eigenpairs=n_eigenpairs, n_neighbors=n_neighbors)
 
 # =============================================================================
-# Graph laplacian
+# Train GP
 # =============================================================================
 positional_encoding = d.evecs_Lc.reshape(d.n, -1)
 
@@ -33,18 +34,22 @@ manifold_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc),
 
 manifold_GP = train_gp(positional_encoding,
                         X,
-                        # dim=3,
                               # n_inducing_points=20,
                                 # kernel=manifold_kernel,
-                                # kernel_variance=20.,
-                                # kernel_lengthscale=2,
                               epochs=1000,
                               noise_variance=0.001)
 
+# =============================================================================
+# Predict with GP
+# =============================================================================
 x_test = positional_encoding.reshape(d.n, -1)
 y_pred_train, _ = manifold_GP.predict_f(x_test)
 y_pred_train = y_pred_train.numpy().reshape(d.n, -1)
 
+# =============================================================================
+# Plotting
+# =============================================================================
+# from RVGP.plotting import graph
 # ax = graph(d.G)
 # import matplotlib.pyplot as plt
 # fig = plt.figure()

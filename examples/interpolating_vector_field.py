@@ -2,153 +2,96 @@
 # -*- coding: utf-8 -*-
 
 from misc import load_mesh
-from RVGP.kernels import ManifoldKernel
-from RVGP import data, train_gp
-import polyscope as ps
 from RVGP.geometry import furthest_point_sampling
-
+from RVGP import data, train_gp
+from RVGP.kernels import ManifoldKernel
+import polyscope as ps
 
 # =============================================================================
-# Define manifold points
+# Parameters and data
 # =============================================================================
-vertices, faces = load_mesh('monkey')
-
-sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.02)#, start_idx=start_idx)
-X = vertices[sample_ind]
-
-n_eigenpairs=20
+n_eigenpairs=100
 n_neighbors=10
-d = data(X, faces, n_eigenpairs=n_eigenpairs, n_neighbors=n_neighbors)
-
-d.random_vector_field()
-d.smooth_vector_field(t=100)
-
-# from sklearn.decomposition import PCA
-# import matplotlib.pyplot as plt
-# pca = PCA(n_components=2)
-# emb = pca.fit_transform(d.evecs_L)
-# plt.scatter(emb[:,0], emb[:,1])
+vertices, faces = load_mesh('bunny')
 
 # =============================================================================
-# points to eliminate around singularity, ok as long as seed is the same
+# Subsample and create data object
 # =============================================================================
+sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.015)
+X = vertices[sample_ind]
+d = data(X, faces, n_eigenpairs=n_eigenpairs)
+
+# =============================================================================
+# Mask out part of the vector field
+# =============================================================================
+#this is for 'bunny'
 import numpy as np
-radius=0.2
-singularity = np.array([-0.672737181, 0.415925592, -0.491816372])
-train_ind = np.linalg.norm(d.vertices-singularity, axis=1) > radius
-train_ind = np.ones(d.n, dtype=bool)
-test_ind = train_ind
+d.random_vector_field(seed=1)
+d.smooth_vector_field(t=100)
+singularity = np.array([-0.08679473,  0.1146,  0.0022])
+train_ind =  np.linalg.norm(X-singularity, axis=1) > 0.015
+train_x, train_y = d.evecs_Lc.reshape(d.n, -1)[train_ind], X[train_ind]
+test_x, test_y = d.evecs_Lc.reshape(d.n, -1)[~train_ind], X[~train_ind]
 
 # =============================================================================
 # Train GP for manifold
 # =============================================================================
-manifold_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
-                        nu=3/2, 
-                        kappa=5, 
-                        typ='se',
-                        sigma_f=1.)
+# positional_encoding = d.evecs_Lc.reshape(d.n, -1)
 
-manifold_GP = train_gp(d.evecs_Lc.reshape(d.n, -1)[train_ind],
-                              d.vertices[train_ind],
-                              # n_inducing_points=20,
-                               # kernel=manifold_kernel,
-                               kernel_variance=1.,
-                              epochs=1000,
-                              noise_variance=0.001)
+manifold_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
+                                  nu=3/2, 
+                                  kappa=5, 
+                                  typ='matern',
+                                  sigma_f=1.)
+
+# manifold_GP = train_gp(positional_encoding,
+#                        X,
+#                        # n_inducing_points=20,
+#                        # kernel=manifold_kernel,
+#                        epochs=1000,
+#                        noise_variance=0.001)
 
 # =============================================================================
 # Train GP for vector field over manifold
 # =============================================================================
 vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
-                        nu=3/2, 
-                        kappa=5, 
-                        typ='se',
-                        sigma_f=1.)
+                                     nu=3/2, 
+                                     kappa=5, 
+                                     typ='matern',
+                                     sigma_f=1.)
 
-vector_field_GP = train_gp(d.evecs_Lc.reshape(d.n, -1)[train_ind], 
-                                  d.vectors[train_ind],
-                                   dim=d.vertices.shape[1],
-                                  epochs=1000,
-                                   # n_inducing_points=20,
-                                    # kernel=vector_field_kernel,
-                                  noise_variance=0.001)
+vector_field_GP = train_gp(d.evecs_Lc.reshape(d.n, -1),
+                            d.vectors,
+                            dim=vertices.shape[1],
+                            epochs=1000,
+                            # n_inducing_points=20,
+                            kernel=vector_field_kernel,
+                            noise_variance=0.001)
 
 # =============================================================================
-# Make new predictions
+# Predict with GPs
 # =============================================================================
-x_test = d.evecs_Lc.reshape(d.n, -1)
-y_pred_mean, _ = manifold_GP.predict_f(x_test)
+x_test = test_x#d.evecs_Lc.reshape(d.n, -1)
+# y_pred_mean, _ = manifold_GP.predict_f(x_test)
 
-x_test = d.evecs_Lc.reshape(-1, n_eigenpairs)
+n = len(test_x)
+x_test = x_test.reshape(-1, n_eigenpairs)
 f_pred_mean, _ = vector_field_GP.predict_f(x_test)
-f_pred_mean = f_pred_mean.numpy().reshape(d.n,-1)
+f_pred_mean = f_pred_mean.numpy().reshape(n, -1)
 
 # =============================================================================
-# Plot
+# Plotting
 # =============================================================================
+# from RVGP.plotting import graph
+# ax = graph(d.G)
+# ax.quiver(X[:,0], X[:,1], X[:,2], d.vectors[:,0], d.vectors[:,1], d.vectors[:,2], color='g', length=0.3)
+# ax.quiver(y_pred_mean[:,0], y_pred_mean[:,1], y_pred_mean[:,2], f_pred_mean[:,0], f_pred_mean[:,1], f_pred_mean[:,2], color='r', length=0.3)
+# ax.axis('equal')
+
 ps.init()
 ps_mesh = ps.register_surface_mesh("Surface points", vertices, faces)
-ps_cloud = ps.register_point_cloud("Training points", d.vertices[train_ind])
+ps_cloud = ps.register_point_cloud("Training points", train_y)
 ps_cloud.add_vector_quantity("Training vectors", d.vectors[train_ind], color=(0., 0., 1.), enabled=True)
-ps_cloud = ps.register_point_cloud("Predicted points", y_pred_mean[test_ind])
-ps_cloud.add_vector_quantity("Predicted vectors", f_pred_mean[test_ind], color=(1., 0., 0.), enabled=True)
+ps_cloud = ps.register_point_cloud("Predicted points", test_y)
+ps_cloud.add_vector_quantity("Predicted vectors", f_pred_mean, color=(1., 0., 0.), enabled=True)
 ps.show()
-
-# from misc import load_mesh
-# from RVGP.geometry import sample_from_neighbourhoods
-# from RVGP.kernels import ManifoldKernel
-# from RVGP import data, train_gp
-# import polyscope as ps
-
-
-# # Load mesh
-# vertices, faces = load_mesh('sphere')
-# dim_emb = vertices.shape[1]
-
-# # Form data object
-# d = data(vertices, faces, n_eigenpairs=3)
-
-# d.random_vector_field()
-# d.smooth_vector_field(t=100)
-
-# manifold_kernel = ManifoldKernel((d.evecs_L, d.evals_L), 
-#                         nu=3/2, 
-#                         kappa=5, 
-#                         sigma_f=1)
-
-# sp_to_manifold_gp = train_gp(d.evecs_L,
-#                              d.vertices,
-#                              # n_inducing_points=20,
-#                              kernel=manifold_kernel,
-#                              epochs=1000,
-#                              noise_variance=0.001)
-
-# vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
-#                         nu=3/2, 
-#                         kappa=5, 
-#                         sigma_f=1)
-
-# sp_to_vector_field_gp = train_gp(d.evecs_Lc.reshape(d.n, -1), 
-#                                  d.vectors,
-#                                  dim=d.vertices.shape[1],
-#                                  epochs=1000,
-#                                  # n_inducing_points=20,
-#                                  kernel=vector_field_kernel,
-#                                  noise_variance=0.001)
-
-# # n_test = 2
-# # test_points = sample_from_neighbourhoods(d.evecs_Lc.reshape(d.n, -1), k=2, n=n_test)
-# test_points = d.evecs_L.reshape(d.n, -1)
-# manifold_pred_mean, _ = sp_to_manifold_gp.predict_f(test_points)
-
-# test_points = d.evecs_Lc.reshape(d.n, -1)
-# vector_field_pred_mean, _ = sp_to_vector_field_gp.predict_f(test_points.reshape(len(test_points)*d.vertices.shape[1], -1))
-# vector_field_pred_mean = vector_field_pred_mean.numpy().reshape(len(test_points), -1)
-
-# ps.init()
-# ps_mesh = ps.register_surface_mesh("Surface points", vertices, faces)
-# ps_cloud = ps.register_point_cloud("Training points", d.vertices)
-# ps_cloud.add_vector_quantity("Training vectors", d.vectors, color=(0., 0., 1.), enabled=True)
-# ps_cloud = ps.register_point_cloud("Predicted points", manifold_pred_mean)
-# ps_cloud.add_vector_quantity("Predicted vectors", vector_field_pred_mean, color=(1., 0., 0.), enabled=True)
-# ps.show()
