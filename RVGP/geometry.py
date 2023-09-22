@@ -9,6 +9,7 @@ from scipy import sparse
 
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import kneighbors_graph
+from sklearn.neighbors import KDTree
 
 
 
@@ -70,43 +71,43 @@ def compute_connection_laplacian(G, R, normalization=None):
     return Lc
 
 
-def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
-    
-    if n_eigenpairs is None:
-        n_eigenpairs = laplacian.shape[0]
-    if n_eigenpairs >= laplacian.shape[0]:
-        print("Number of features is greater than number of vertices. Number of features will be reduced.")
-        n_eigenpairs = laplacian.shape[0]
-
-    evals, evecs = tf.linalg.eigh(laplacian.toarray())
-    evals = evals[:n_eigenpairs]
-    evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
-
-    evals = tf.convert_to_tensor(evals, dtype=dtype)
-    evecs = tf.convert_to_tensor(evecs, dtype)
-    
-    return evals, evecs
-
-
 # def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
     
 #     if n_eigenpairs is None:
 #         n_eigenpairs = laplacian.shape[0]
 #     if n_eigenpairs >= laplacian.shape[0]:
+#         print("Number of features is greater than number of vertices. Number of features will be reduced.")
 #         n_eigenpairs = laplacian.shape[0]
 
-#     evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs+1, which="SM")
-    
-#     #eliminate trivial eigenvector
-#     evals = evals[1:]
-#     evecs = evecs[:,1:]
-    
-#     evecs *= np.sqrt(len(evecs))
+#     evals, evecs = tf.linalg.eigh(laplacian.toarray())
+#     evals = evals[:n_eigenpairs]
+#     evecs = evecs[:, :n_eigenpairs]/np.sqrt(len(evecs))
 
 #     evals = tf.convert_to_tensor(evals, dtype=dtype)
-#     evecs = tf.convert_to_tensor(evecs, dtype=dtype)
+#     evecs = tf.convert_to_tensor(evecs, dtype)
     
 #     return evals, evecs
+
+
+def compute_spectrum(laplacian, n_eigenpairs=None, dtype=tf.float64):
+    
+    if n_eigenpairs is None:
+        n_eigenpairs = laplacian.shape[0]
+    if n_eigenpairs >= laplacian.shape[0]:
+        n_eigenpairs = laplacian.shape[0]
+
+    evals, evecs = scipy.sparse.linalg.eigsh(laplacian, k=n_eigenpairs+1, which="SM")
+    
+    #eliminate trivial eigenvector
+    evals = evals[1:]
+    evecs = evecs[:,1:]
+    
+    evecs *= np.sqrt(len(evecs))
+
+    evals = tf.convert_to_tensor(evals, dtype=dtype)
+    evecs = tf.convert_to_tensor(evecs, dtype=dtype)
+    
+    return evals, evecs
 
 
 def sample_from_convex_hull(points, num_samples, k=5):
@@ -152,6 +153,53 @@ def manifold_graph(X, typ = 'knn', n_neighbors=5):
     nx.set_node_attributes(G, node_attribute, "pos")
 
     return G
+
+
+def find_nn(x_query, X, nn=3, r=None):
+    """
+    Find nearest neighbors of a point on the manifold
+
+    Parameters
+    ----------
+    ind_query : 2d np array, list[2d np array]
+        Index of points whose neighbors are needed.
+    x : nxd array (dimensions are columns!)
+        Coordinates of n points on a manifold in d-dimensional space.
+    nn : int, optional
+        Number of nearest neighbors. The default is 1.
+        
+    Returns
+    -------
+    dist : list[list]
+        Distance of nearest neighbors.
+    ind : list[list]
+        Index of nearest neighbors.
+
+    """
+    
+    #Fit neighbor estimator object
+    kdt = KDTree(X, leaf_size=30, metric='euclidean')
+    
+    if r is not None:
+        ind, dist = kdt.query_radius(x_query, r=r, return_distance=True, sort_results=True)
+        ind = ind[0]
+        dist = dist[0]
+    else:
+        # apparently, the outputs are reversed here compared to query_radius()
+        dist, ind = kdt.query(x_query, k=nn)
+            
+    return dist, ind.flatten()
+
+
+def closest_manifold_point(x_query, d, nn=3):
+    dist, ind = find_nn(x_query, d.vertices, nn=nn)
+    w = 1/(dist.T+0.00001)
+    w /= w.sum()
+    positional_encoding = d.evecs_Lc.reshape(d.n, -1)
+    pe_manifold = (positional_encoding[ind]*w).sum(0, keepdims=True)
+    x_manifold = d.vertices[ind]
+    
+    return x_manifold, pe_manifold
 
 
 def furthest_point_sampling(x, N=None, stop_crit=0.1, start_idx=0):

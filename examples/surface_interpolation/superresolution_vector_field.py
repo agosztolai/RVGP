@@ -11,14 +11,14 @@ import numpy as np
 # =============================================================================
 # Parameters and data
 # =============================================================================
-n_eigenpairs=100
+n_eigenpairs=50
 n_neighbors=10
-vertices, faces = load_mesh('bunny')
+vertices, faces = load_mesh('sphere')
 
 # =============================================================================
 # Subsample and create data object
 # =============================================================================
-sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.01)
+sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.05)
 X = vertices[sample_ind]
 d = data(X, faces, n_eigenpairs=n_eigenpairs)
 d.random_vector_field(seed=1)

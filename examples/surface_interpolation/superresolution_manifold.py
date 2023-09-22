@@ -34,11 +34,11 @@ manifold_kernel = ManifoldKernel((d.evecs_Lc.reshape(d.n,-1), np.tile(d.evals_Lc
                                   sigma_f=1.)
 
 manifold_GP = train_gp(positional_encoding,
-                        X,
-                        # n_inducing_points=20,
-                        kernel=manifold_kernel,
-                        epochs=1000,
-                        noise_variance=0.001)
+                       X,
+                       # n_inducing_points=20,
+                       # kernel=manifold_kernel,
+                       epochs=1000,
+                       noise_variance=0.001)
 
 # =============================================================================
 # Predict with GP
