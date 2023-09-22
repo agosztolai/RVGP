@@ -20,7 +20,8 @@ def train_gp(input,
              kernel_variance=None,
              epochs=1000,
              seed=0,
-             compute_error=True):
+             compute_error=True,
+             positivity_constraint=1e-2):
     
     #split training and test set
     in_train, in_test, out_train, out_test = \
@@ -34,6 +35,8 @@ def train_gp(input,
     in_test = in_test.reshape(in_test.shape[0]*dim, -1)
     out_train = out_train.reshape(out_train.shape[0]*dim, -1)
     out_test = out_test.reshape(out_test.shape[0]*dim, -1)
+    
+    gpflow.config.set_default_positive_minimum(positivity_constraint)
     
     if kernel is None:
         kernel = gpflow.kernels.RBF()
@@ -51,7 +54,7 @@ def train_gp(input,
                                 kernel=kernel, 
                                 noise_variance=noise_variance,
                                 inducing_variable=inducing_variable)
-                
+    
     if kernel_variance is not None:
         kernel.variance.assign(kernel_variance)
         gpflow.set_trainable(kernel.variance, False)

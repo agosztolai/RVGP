@@ -14,13 +14,13 @@ from tqdm import tqdm
 # =============================================================================
 n_eigenpairs=50
 n_neighbors=10
-vertices, faces = load_mesh('bunny')
+vertices, faces = load_mesh('torus')
 dim_emb = vertices.shape[1]
 
 # =============================================================================
 # Subsample and create data object
 # =============================================================================
-sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.025)
+sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.05)
 X = vertices[sample_ind]
 d = data(X, faces, n_eigenpairs=n_eigenpairs, n_neighbors=n_neighbors)
 
@@ -34,7 +34,7 @@ positional_encoding = d.evecs_Lc.reshape(d.n, -1)
 
 manifold_kernel = ManifoldKernel((d.evecs_Lc.reshape(d.n,-1), np.tile(d.evals_Lc, 3)), 
                                   nu=3/2, 
-                                  kappa=1., 
+                                  kappa=1.,
                                   typ='matern',
                                   sigma_f=1.)
 

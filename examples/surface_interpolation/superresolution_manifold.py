@@ -10,14 +10,14 @@ import polyscope as ps
 # =============================================================================
 # Parameters and data
 # =============================================================================
-n_eigenpairs=200
+n_eigenpairs=100
 n_neighbors=10
-vertices, faces = load_mesh('sphere')
+vertices, faces = load_mesh('bunny')
 
 # =============================================================================
 # Subsample and create data object
 # =============================================================================
-sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.05)
+sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.02)
 X = vertices[sample_ind]
 d = data(X, faces, n_eigenpairs=n_eigenpairs, n_neighbors=n_neighbors)
 
@@ -27,16 +27,16 @@ d = data(X, faces, n_eigenpairs=n_eigenpairs, n_neighbors=n_neighbors)
 positional_encoding = d.evecs_Lc.reshape(d.n, -1)
 
 import numpy as np
-manifold_kernel = ManifoldKernel((d.evecs_Lc.reshape(d.n,-1), np.tile(d.evals_Lc, 3)), 
-                                  nu=3/2, 
-                                  kappa=1., 
-                                  typ='se',
-                                  sigma_f=1.)
+# manifold_kernel = ManifoldKernel((d.evecs_Lc[:,:10].reshape(d.n,-1), d.evals_Lc), 
+#                                   nu=3/2, 
+#                                   kappa=1., 
+#                                   typ='se',
+#                                   sigma_f=1.)
 
 manifold_GP = train_gp(positional_encoding,
                        X,
                        # n_inducing_points=20,
-                       # kernel=manifold_kernel,
+                        # kernel=manifold_kernel,
                        epochs=1000,
                        noise_variance=0.001)
 
