@@ -1,8 +1,10 @@
-# import numpy as np
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import tensorflow as tf
 import gpflow
-# import warnings
-
+from gpflow.utilities import positive
+from gpflow.utilities.ops import square_distance
 
 class ManifoldKernel(gpflow.kernels.Kernel):
     """Matern kernel on manifold. 
@@ -60,9 +62,15 @@ class ManifoldKernel(gpflow.kernels.Kernel):
             
         S = self.eval_S(typ=self.typ)
         return (X * S) @ tf.transpose(X2) # shape (n,n)
+    
+        # r2 = square_distance(X, X2)/self.kappa
+        # return self.sigma_f * tf.exp(-0.5 * r2)
 
     def K_diag(self, X):
         """This is just the diagonal of K"""
         
         S = self.eval_S(typ=self.typ)
-        return tf.reduce_sum(tf.transpose(X * S) * tf.transpose(X), axis=0)
+        return tf.linalg.tensor_diag_part((X * S) @ tf.transpose(X))
+    
+        # return tf.fill(tf.shape(X)[:-1], tf.squeeze(self.sigma_f))
+    

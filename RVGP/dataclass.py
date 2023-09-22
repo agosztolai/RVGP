@@ -40,12 +40,13 @@ class data:
         
         print('Compute eigendecompositions')
         evals_L, evecs_L = compute_spectrum(L, n_eigenpairs)
-        evals_L, evecs_L = evals_L, evecs_L.numpy()
+        evals_L, evecs_L = evals_L.numpy(), evecs_L.numpy()
         
         evals_Lc, evecs_Lc = compute_spectrum(Lc, n_eigenpairs) # U\Lambda U^T
         #rather than U, take TU, where T is the local gauge
         if n_eigenpairs is None:
             n_eigenpairs = evecs_Lc.shape[1]
+        evals_Lc = evals_Lc.numpy()
         evecs_Lc = evecs_Lc.numpy().reshape(-1, dim_man, n_eigenpairs)
         evecs_Lc = np.einsum("bij,bjk->bik", gauges, evecs_Lc)
         evecs_Lc = evecs_Lc.reshape(-1, n_eigenpairs)

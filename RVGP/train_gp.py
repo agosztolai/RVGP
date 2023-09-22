@@ -51,7 +51,7 @@ def train_gp(input,
                                 kernel=kernel, 
                                 noise_variance=noise_variance,
                                 inducing_variable=inducing_variable)
-        
+                
     if kernel_variance is not None:
         kernel.variance.assign(kernel_variance)
         gpflow.set_trainable(kernel.variance, False)

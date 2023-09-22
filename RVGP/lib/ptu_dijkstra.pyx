@@ -193,7 +193,8 @@ def connections(tangents,
     
     edge_index = np.vstack([symmetrized_graph.tocoo().row, symmetrized_graph.tocoo().col])
     edge_index = expand_edge_index(edge_index, dim=R.shape[-1])
-    R = sparse.coo_matrix((R.flatten(), (edge_index[0], edge_index[1]))) 
+    
+    R = sparse.coo_matrix((R.flatten(), (edge_index[0], edge_index[1])))
 
     return R
 
