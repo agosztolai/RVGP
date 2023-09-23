@@ -155,13 +155,20 @@ def simulate_pendulum(n_points=15, n_traj=2, steps=2001, seed=0):
 
     vector_field = system.dynamics_gradient_field(positions, momentums)
     
-    initial_states = np.hstack([np.random.uniform(low=0,
-                                                  high=2*np.pi, 
-                                                  size=(n_traj,1)),
-                                np.random.uniform(low=-3,
-                                                  high=3, 
-                                                  size=(n_traj,1))])
- 
+    # initial_states = np.hstack([np.random.uniform(low=0,
+    #                                               high=2*np.pi, 
+    #                                               size=(n_traj,1)),
+    #                             np.random.uniform(low=-3,
+    #                                               high=3, 
+    #                                               size=(n_traj,1))])
+    
+    # initial_states = np.vstack([[2., 3.],
+    #                             [2., -3],
+    #                             [2.84599332,0],
+    #                             [3.41719199,0]])
+    
+    initial_states = np.hstack([positions, momentums])
+    
     rollouts = system.rollout(initial_states, steps)
     
     grid = np.array(grid, dtype=np.float64)
@@ -170,10 +177,10 @@ def simulate_pendulum(n_points=15, n_traj=2, steps=2001, seed=0):
     
     return grid, vector_field, rollouts
 
-grid, vector_field, rollouts= simulate_pendulum()
+# grid, vector_field, rollouts= simulate_pendulum()
 
-fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-plot_vector_field(grid, vector_field, color="black", ax=ax, scale=300, width=0.004)
-for i in range(rollouts.shape[0]):
-    plt.scatter(rollouts[i, :, 0], rollouts[i, :, 1], s=1)
-plt.gca().set_aspect("equal")
+# fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+# plot_vector_field(grid, vector_field, color="black", ax=ax, scale=300, width=0.004)
+# for i in range(rollouts.shape[0]):
+#     plt.scatter(rollouts[i, :, 0], rollouts[i, :, 1], s=1)
+# plt.gca().set_aspect("equal")
