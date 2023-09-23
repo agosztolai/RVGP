@@ -1,30 +1,47 @@
-# Copyright (c) 2020 Viacheslav Borovitskiy, Iskander Azangulov, Alexander Terenin, Peter Mostowsky, Marc Peter Deisenroth, Nicolas Durrande. All Rights Reserved.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-""" Utility functions. """
-import warnings
-import tensorflow as tf
+import os
+import numpy as np
 
+def load_mesh(data='bunny', folder=None):
+    # Initialize empty lists to store vertices and faces
+    vertices = []
+    faces = []
+    
+    dirname = os.path.dirname(os.path.realpath(__file__))
+    if folder is None:
+        file = os.path.join(dirname, '..', 'examples/data', data)
+    else:
+        file = os.path.join(folder, data)
+    
+    # Open the text file in read mode
+    with open('{}.obj'.format(file), 'r') as file:
 
-def tf_jitchol(mat, jitter=0, dtype=tf.float32):
-    """Run Cholesky decomposition with an increasing jitter,
-    until the jitter becomes too large.
-    Arguments
-    ---------
-    mat : (m, m) tf.Tensor
-        Positive-definite matrix
-    jitter : float
-        Initial jitter
-    """
-    try:
-        chol = tf.linalg.cholesky(mat)
-        return chol
-    except:
-        new_jitter = jitter*10.0 if jitter > 0.0 else 1e-15
-        if new_jitter > 1.0:
-            raise RuntimeError('Matrix not positive definite even with jitter')
-        warnings.warn(
-            'Matrix not positive-definite, adding jitter {:e}'
-            .format(new_jitter),
-            RuntimeWarning)
-        new_jitter = tf.cast(new_jitter, dtype=dtype)
-        return tf_jitchol(mat + tf.multiply(new_jitter, tf.eye(mat.shape[-1], dtype=dtype)), new_jitter)
+        # Loop through each line in the file
+        for line in file:
+
+            # Skip lines starting with '#'
+            if line.startswith('#'):
+                continue
+
+            # Split the line into words
+            words = line.split()
+
+            # Check if it starts with 'v' for vertices or 'f' for faces
+            if words[0] == 'v':
+                # Extract the numbers and convert them to floats
+                vertex = [float(words[1]), float(words[2]), float(words[3])]
+                # Append the vertex to the vertices list
+                vertices.append(vertex)
+            elif words[0] == 'f':
+                # Extract the numbers and convert them to integers
+                face = [int(words[1]), int(words[2]), int(words[3])]
+                # Append the face to the faces list
+                faces.append(face)
+
+    # Convert the lists to arrays
+    vertices = np.array(vertices)
+    faces = np.array(faces)-1
+    
+    return vertices, faces

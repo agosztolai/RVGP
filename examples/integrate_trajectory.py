@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from misc import load_mesh
+from RVGP.utils import load_mesh
 from RVGP.kernels import ManifoldKernel
 from RVGP import data, train_gp
 from RVGP.geometry import furthest_point_sampling, closest_manifold_point
@@ -12,7 +12,7 @@ from tqdm import tqdm
 # =============================================================================
 # Define manifold points
 # =============================================================================
-n_eigenpairs=50
+n_eigenpairs=10
 n_neighbors=10
 vertices, faces = load_mesh('torus')
 dim_emb = vertices.shape[1]
@@ -32,11 +32,11 @@ d.smooth_vector_field(t=100)
 # =============================================================================
 positional_encoding = d.evecs_Lc.reshape(d.n, -1)
 
-manifold_kernel = ManifoldKernel((d.evecs_Lc.reshape(d.n,-1), np.tile(d.evals_Lc, 3)), 
-                                  nu=3/2, 
-                                  kappa=1.,
-                                  typ='matern',
-                                  sigma_f=1.)
+# manifold_kernel = ManifoldKernel((d.evecs_Lc.reshape(d.n,-1), np.tile(d.evals_Lc, 3)), 
+#                                   nu=3/2, 
+#                                   kappa=1.,
+#                                   typ='matern',
+#                                   sigma_f=1.)
 
 manifold_GP = train_gp(positional_encoding,
                        X,

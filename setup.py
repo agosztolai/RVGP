@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import numpy
 from Cython.Build import cythonize
 from setuptools import Extension
 
@@ -16,15 +15,20 @@ requirements = (
    'polyscope'
 )
 
+# This function is called when the extension module is built
+def ext_modules():
+    import numpy
+    return cythonize(
+        Extension(
+            "ptu_dijkstra", ["RVGP/lib/ptu_dijkstra.pyx"], include_dirs=[numpy.get_include()]
+        )
+    )
+
 setup(name='RVGP',
       version='0.1',
       packages=find_packages(exclude=["examples*"]),
       python_requires='>=3.6,<=3.9',
       install_requires=requirements,
       package_data={"RVGP.lib": ["ptu_dijkstra.pyx", "ptu_dijkstra.c"]},
-      ext_modules=cythonize(
-          Extension(
-              "ptu_dijkstra", ["RVGP/lib/ptu_dijkstra.pyx"], include_dirs=[numpy.get_include()]
-          )
-      ),
+      ext_modules=ext_modules(),  # Call the function here,
       )
