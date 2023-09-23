@@ -22,9 +22,9 @@ random.seed(10)
 # =============================================================================
 # Generate data
 # =============================================================================
-n_points=35 #number of gridpoints
+n_points=40 #number of gridpoints
 n_traj=2 #number of simulated trajectories
-n_eigenpairs=250 # 300
+n_eigenpairs=300 # 300
 steps=2
 radius=2
 
@@ -166,8 +166,8 @@ f_pred = f_pred.numpy().reshape(d.n, -1)
 # =============================================================================
 # Simulate trajectory
 # =============================================================================
-len_t = 100
-h = 5 #step size
+len_t = 300
+h = 5 #5 #step size
 
 # looping over length of trajectory
 
