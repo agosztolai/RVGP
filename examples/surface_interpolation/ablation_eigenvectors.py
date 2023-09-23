@@ -5,14 +5,13 @@ from misc import load_mesh
 from RVGP.geometry import furthest_point_sampling
 from RVGP import data, train_gp
 from RVGP.kernels import ManifoldKernel
-import polyscope as ps
 import numpy as np
 from sklearn.metrics import r2_score
 
 # =============================================================================
 # Parameters and data
 # =============================================================================
-n_eigenpairs=100
+n_eigenpairs=300
 n_neighbors=10
 vertices, faces = load_mesh('bunny')
 trials=10
@@ -37,17 +36,18 @@ for k in [1,2,5,10,100,200,300]:
 
     r2 = []
     for t in range(trials):
+        print(t)
         train_ind =  np.random.choice(np.arange(len(X)), size=int(0.8*len(X)))
         test_ind = set(range(len(X))) - set(train_ind)
         test_ind = list(test_ind)
         
-        train_x, train_f = d.evecs_Lc.reshape(d.n, -1)[train_ind], d.vectors[train_ind]
-        test_x, test_f = d.evecs_Lc.reshape(d.n, -1)[test_ind], d.vectors[test_ind]
+        train_x, train_f = d.evecs_Lc[:,:k].reshape(d.n, -1)[train_ind], d.vectors[train_ind]
+        test_x, test_f = d.evecs_Lc[:,:k].reshape(d.n, -1)[test_ind], d.vectors[test_ind]
         
         # =============================================================================
         # Train GP for vector field over manifold
         # =============================================================================
-        vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
+        vector_field_kernel = ManifoldKernel((d.evecs_Lc[:,:k], d.evals_Lc[:k]), 
                                              nu=3/2, 
                                              kappa=5, 
                                              typ='matern',
@@ -63,7 +63,7 @@ for k in [1,2,5,10,100,200,300]:
         # Predict with GPs
         # =============================================================================
         n = len(test_x)
-        test_x = test_x.reshape(-1, n_eigenpairs)
+        test_x = test_x.reshape(-1, k)
         f_pred_mean, _ = vector_field_GP.predict_f(test_x)
         f_pred_mean = f_pred_mean.numpy().reshape(n, -1)
     

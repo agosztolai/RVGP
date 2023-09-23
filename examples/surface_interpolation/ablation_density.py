@@ -5,7 +5,6 @@ from misc import load_mesh
 from RVGP.geometry import furthest_point_sampling
 from RVGP import data, train_gp
 from RVGP.kernels import ManifoldKernel
-import polyscope as ps
 import numpy as np
 from sklearn.metrics import r2_score
 
