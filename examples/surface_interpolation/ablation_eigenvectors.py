@@ -6,7 +6,8 @@ from RVGP.geometry import furthest_point_sampling
 from RVGP import data, train_gp
 from RVGP.kernels import ManifoldKernel
 import numpy as np
-from sklearn.metrics import r2_score
+# from sklearn.metrics import r2_score
+import pickle
 
 # =============================================================================
 # Parameters and data
@@ -31,7 +32,7 @@ d.smooth_vector_field(t=100)
 
 np.random.seed(0)
 
-correlation = []
+results = []
 for k in [1,2,5,10,100,200,300]:
 
     r2 = []
@@ -67,9 +68,8 @@ for k in [1,2,5,10,100,200,300]:
         f_pred_mean, _ = vector_field_GP.predict_f(test_x)
         f_pred_mean = f_pred_mean.numpy().reshape(n, -1)
     
-        r2.append(r2_score(test_f, f_pred_mean))
+        # r2.append(r2_score(test_f, f_pred_mean))
     
-    correlation.append(r2)
+        results.append([test_f, f_pred_mean])
+        pickle.dump(results, open('ablation_eigenvector_results.pkl','wb'))
     
-import pickle
-pickle.dump(correlation, open('ablation_eigenvector_results.pkl','wb'))
