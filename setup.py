@@ -31,7 +31,7 @@ setup(
     name='RVGP',
     version='0.1',
     packages=find_packages(exclude=["examples*"]),
-    python_requires='>=3.6,<=3.9',
+    python_requires='>=3.6,<=3.10',
     install_requires=requirements,
     package_data={"RVGP.lib": ["ptu_dijkstra.pyx", "ptu_dijkstra.c"]},
     cmdclass={'build_ext': BuildExtSubclass},
