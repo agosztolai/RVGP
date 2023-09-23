@@ -6,7 +6,8 @@ from RVGP.geometry import furthest_point_sampling
 from RVGP import data, train_gp
 from RVGP.kernels import ManifoldKernel
 import numpy as np
-from sklearn.metrics import r2_score
+# from sklearn.metrics import r2_score
+import pickle
 
 # =============================================================================
 # Parameters and data
@@ -16,14 +17,7 @@ n_neighbors=10
 vertices, faces = load_mesh('bunny')
 trials=10
 
-# =============================================================================
-# Subsample and create data object
-# =============================================================================
-sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.015)
-X = vertices[sample_ind]
-d = data(X, faces, n_eigenpairs=n_eigenpairs)
-d.random_vector_field(seed=1)
-d.smooth_vector_field(t=100)
+
 
 # =============================================================================
 # Superresolution
@@ -31,12 +25,21 @@ d.smooth_vector_field(t=100)
 
 np.random.seed(0)
 
-correlation = []
-for alpha in np.linspace(0.1,0.9,10):
-
+results = []
+for alpha in np.linspace(0.015,0.5,10):
+    # =============================================================================
+    # Subsample and create data object
+    # =============================================================================
+    sample_ind, _ = furthest_point_sampling(vertices, stop_crit=alpha)
+    X = vertices[sample_ind]
+    d = data(X, faces, n_eigenpairs=n_eigenpairs)
+    d.random_vector_field(seed=1)
+    d.smooth_vector_field(t=100)
+    
     r2 = []
     for t in range(trials):
-        train_ind =  np.random.choice(np.arange(len(X)), size=int(alpha*len(X)))
+        print(t)
+        train_ind =  np.random.choice(np.arange(len(X)), size=int(0.5*len(X)))
         test_ind = set(range(len(X))) - set(train_ind)
         test_ind = list(test_ind)
         
@@ -66,9 +69,6 @@ for alpha in np.linspace(0.1,0.9,10):
         f_pred_mean, _ = vector_field_GP.predict_f(test_x)
         f_pred_mean = f_pred_mean.numpy().reshape(n, -1)
     
-        r2.append(r2_score(test_f, f_pred_mean))
+        results.append([test_f, f_pred_mean])
     
-    correlation.append(r2)
-    
-import pickle
-pickle.dump(correlation, open('ablation_density_results.pkl','wb'))
+        pickle.dump(results, open('ablation_density_results.pkl','wb'))
