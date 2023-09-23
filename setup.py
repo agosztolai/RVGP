@@ -1,5 +1,5 @@
-from setuptools import setup, find_packages
-from setuptools import Extension
+from setuptools import setup, find_packages, Extension
+from setuptools.command.build_ext import build_ext
 
 requirements = (
    'cython==0.29.35',
@@ -14,21 +14,26 @@ requirements = (
    'polyscope'
 )
 
-# This function is called when the extension module is built
-def ext_modules():
-    import numpy
-    from Cython.Build import cythonize
-    return cythonize(
-        Extension(
-            "ptu_dijkstra", ["RVGP/lib/ptu_dijkstra.pyx"], include_dirs=[numpy.get_include()]
-        )
-    )
+# Custom build_ext subclass to delay the import of numpy and Cython
+class BuildExtSubclass(build_ext):
+    def run(self):
+        import numpy
+        from Cython.Build import cythonize
 
-setup(name='RVGP',
-      version='0.1',
-      packages=find_packages(exclude=["examples*"]),
-      python_requires='>=3.6,<=3.9',
-      install_requires=requirements,
-      package_data={"RVGP.lib": ["ptu_dijkstra.pyx", "ptu_dijkstra.c"]},
-      ext_modules=ext_modules(),  # Call the function here,
-      )
+        self.extensions = cythonize(
+            Extension(
+                "ptu_dijkstra", ["RVGP/lib/ptu_dijkstra.pyx"], include_dirs=[numpy.get_include()]
+            )
+        )
+        build_ext.run(self)
+
+setup(
+    name='RVGP',
+    version='0.1',
+    packages=find_packages(exclude=["examples*"]),
+    python_requires='>=3.6,<=3.9',
+    install_requires=requirements,
+    package_data={"RVGP.lib": ["ptu_dijkstra.pyx", "ptu_dijkstra.c"]},
+    cmdclass={'build_ext': BuildExtSubclass},
+    ext_modules=[Extension("ptu_dijkstra", ["RVGP/lib/ptu_dijkstra.pyx"])]
+)
