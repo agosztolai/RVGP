@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from Cython.Build import cythonize
 from setuptools import Extension
 
 requirements = (
@@ -18,6 +17,7 @@ requirements = (
 # This function is called when the extension module is built
 def ext_modules():
     import numpy
+    from Cython.Build import cythonize
     return cythonize(
         Extension(
             "ptu_dijkstra", ["RVGP/lib/ptu_dijkstra.pyx"], include_dirs=[numpy.get_include()]
