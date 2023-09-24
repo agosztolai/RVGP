@@ -13,11 +13,8 @@ import pickle
 # Parameters and data
 # =============================================================================
 n_eigenpairs=100
-n_neighbors=10
 vertices, faces = load_mesh('bunny')
-trials=10
-
-
+trials=20
 
 # =============================================================================
 # Superresolution
@@ -26,7 +23,7 @@ trials=10
 np.random.seed(0)
 
 results = []
-for alpha in np.linspace(0.015,0.5,10):
+for alpha in np.linspace(0.01,0.08,10):
     # =============================================================================
     # Subsample and create data object
     # =============================================================================
@@ -39,7 +36,7 @@ for alpha in np.linspace(0.015,0.5,10):
     r2 = []
     for t in range(trials):
         print(t)
-        train_ind =  np.random.choice(np.arange(len(X)), size=int(0.5*len(X)))
+        train_ind =  np.random.choice(np.arange(len(X)), size=int(0.8*len(X)))
         test_ind = set(range(len(X))) - set(train_ind)
         test_ind = list(test_ind)
         

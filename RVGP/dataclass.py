@@ -23,7 +23,7 @@ class data:
                  faces=None,
                  vectors=None,
                  dim_man=2, 
-                 n_neighbors=5,
+                 n_neighbors=10,
                  frac_geodesic_neighbours=1.5,
                  # explained_variance=0.9,
                  n_eigenpairs=None):
