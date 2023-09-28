@@ -7,7 +7,7 @@ You will find RVGP useful if you want to
 2. Infer the vector field in out-of-sample regions in order to recover the singularities
 3. Globally smoothen noisy vector fields in order to better preserve singularities.
 
-The package is based on [Gpflow 2.0](https://gpflow.github.io/GPflow/2.9.0/index.html).
+The package is based on [GPFlow 2.0](https://gpflow.github.io/GPflow/2.9.0/index.html).
 
 ## Cite
 
