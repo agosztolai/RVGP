@@ -105,7 +105,7 @@ f_pred_mean, _ = vector_field_GP.predict_f(test_x)
 f_pred_mean = f_pred_mean.numpy().reshape(n, -1)
 ```
 
-We recommend using the [Polyscope](https://polyscope.run) package to perform beautiful visualisations. 
+We recommend using the [Polyscope](https://polyscope.run) package to perform beautiful visualisations. See examples for how to use it.
 
 ## Stay in touch
 
