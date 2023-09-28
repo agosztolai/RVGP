@@ -11,7 +11,8 @@ from RVGP.geometry import (manifold_graph,
                            compute_connection_laplacian,
                            compute_spectrum,
                            project_to_local_frame,
-                           project_to_manifold
+                           project_to_manifold,
+                           manifold_dimension
                            )
 
 from RVGP.smoothing import vector_diffusion
@@ -25,7 +26,7 @@ class data:
                  dim_man=2, 
                  n_neighbors=10,
                  frac_geodesic_neighbours=1.5,
-                 # explained_variance=0.9,
+                 explained_variance=0.9,
                  n_eigenpairs=None):
         
         print('Fit graph')
@@ -33,6 +34,11 @@ class data:
         print('Fit tangent spaces and connections')
         gauges, Sigma = tangent_frames(vertices, G, dim_man, n_neighbors*frac_geodesic_neighbours)
         R = connections(gauges, G, dim_man)
+        
+        if not dim_man:
+            dim_man = manifold_dimension(Sigma, frac_explained=explained_variance)
+            
+        print('Manifold dimension is {}'.format(dim_man))
         
         print('Compute Laplacians')
         L = compute_laplacian(G)
