@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import tensorflow as tf
 import gpflow
 from sklearn.model_selection import train_test_split
 from RVGP.geometry import furthest_point_sampling
@@ -74,39 +73,6 @@ def train_gp(input,
         
     return GP
 
-
-def run_adam(model, epochs, lr=0.001):
-    """
-    Utility function running the Adam optimizer
-
-    :param model: GPflow model
-    :param epochs: number of epochs
-    """
-    logf = []
-    training_loss = model.training_loss
-    optimizer = tf.optimizers.Adam(lr)
-    
-    if hasattr(model, 'log_marginal_likelihood'):
-        loss_name = 'log_marginal_likelihood'
-        # loss = tf.function(model.log_marginal_likelihood)
-    elif hasattr(model, 'elbo'):
-        loss_name = 'ELBO'
-        # loss = tf.function(model.elbo)
-
-    @tf.function
-    def optimization_step():
-        optimizer.minimize(training_loss, model.trainable_variables)
-
-    for step in range(epochs):
-        optimization_step()
-        if step % 10 == 0:
-            loss = -training_loss().numpy()
-            print(loss_name + ' : {}'.format(loss))
-            logf.append(loss)
-            
-    return logf, model
-
-
 def optimize_model_with_scipy(model, epochs):
     optimizer = gpflow.optimizers.Scipy()
     optimizer.minimize(
@@ -116,3 +82,34 @@ def optimize_model_with_scipy(model, epochs):
         options={"disp": True, "maxiter": epochs},
     )
     return model
+
+# def run_adam(model, epochs, lr=0.001):
+#     """
+#     Utility function running the Adam optimizer
+
+#     :param model: GPflow model
+#     :param epochs: number of epochs
+#     """
+#     logf = []
+#     training_loss = model.training_loss
+#     optimizer = tf.optimizers.Adam(lr)
+    
+#     if hasattr(model, 'log_marginal_likelihood'):
+#         loss_name = 'log_marginal_likelihood'
+#         # loss = tf.function(model.log_marginal_likelihood)
+#     elif hasattr(model, 'elbo'):
+#         loss_name = 'ELBO'
+#         # loss = tf.function(model.elbo)
+
+#     @tf.function
+#     def optimization_step():
+#         optimizer.minimize(training_loss, model.trainable_variables)
+
+#     for step in range(epochs):
+#         optimization_step()
+#         if step % 10 == 0:
+#             loss = -training_loss().numpy()
+#             print(loss_name + ' : {}'.format(loss))
+#             logf.append(loss)
+            
+#     return logf, model

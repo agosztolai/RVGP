@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from misc import load_mesh
+from RVGP.utils import load_mesh
 from RVGP.geometry import furthest_point_sampling
 from RVGP import data, train_gp
 from RVGP.kernels import ManifoldKernel
 import numpy as np
-# from sklearn.metrics import r2_score
 import pickle
 
 # =============================================================================
@@ -23,7 +22,7 @@ trials=20
 np.random.seed(0)
 
 results = []
-for alpha in np.linspace(0.01,0.08,10):
+for alpha in np.linspace(0.08,0.15,10):
     # =============================================================================
     # Subsample and create data object
     # =============================================================================
