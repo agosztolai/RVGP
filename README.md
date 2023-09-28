@@ -120,5 +120,4 @@ The following packages were inspirational during the development of this code:
 
 * [Vector heat method](https://github.com/nmwsharp/potpourri3d)
 * [Polyscope](https://polyscope.run)
-* [pyEDM](https://github.com/SugiharaLab/pyEDM)
 * [Parallel Transport Unfolding](https://github.com/mbudnins/parallel_transport_unfolding)
