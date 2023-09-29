@@ -114,6 +114,23 @@ def sample_from_convex_hull(points, num_samples, k=5):
     return np.array(samples)
 
 
+def manifold_dimension(Sigma, frac_explained=0.9):
+    """Estimate manifold dimension based on singular vectors"""
+
+    if frac_explained == 1.0:
+        return Sigma.shape[1]
+
+    Sigma **= 2
+    Sigma /= Sigma.sum(1, keepdims=True)
+    Sigma = Sigma.cumsum(1)
+    var_exp = Sigma.mean(0) - Sigma.std(0)
+    dim_man = np.where(var_exp >= frac_explained)[0][0] + 1
+
+    print("\nFraction of variance explained: ", var_exp)
+
+    return int(dim_man)
+
+
 def manifold_graph(X, typ = 'knn', n_neighbors=5):
     """Fit graph over a pointset X"""
     if typ == 'knn':
