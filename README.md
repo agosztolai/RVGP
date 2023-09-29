@@ -41,7 +41,7 @@ Briefly, RVGP takes the following inputs
 1. `X` - an `nxd` array of points to define the points cloud, which are considered to be sampled from a smooth manifold.
 2. `vectors` - an `nxd` array, defining a signal over the manifold.
 3. dim_man - dimension of the manifold.
-4. (optional) explained_variance - If dim_man==False, this can be used to estimate the dimension of the manifold.
+4. (optional) explained_variance - This will be used to estimate the dimension of the manifold. You may want to change ```dim_man``` if the predicted dimension is different.
 
 Before you fit RVGP, it is a good idea to perform furthest point sampling to even out sample points. This ensured that one region of the manifold will not be overfit. 
 
