@@ -12,7 +12,10 @@ from eeg_utils import compute_vectorfield_features_time
 
 np.random.seed(0)
 
-#%%
+# =============================================================================
+# Load EEG vector field data
+# =============================================================================
+
 
 def find_mat_files(directory):
     mat_files = {}
@@ -31,11 +34,12 @@ mat_files = find_mat_files(directory)
 
 
 
-#%%
+# =============================================================================
+# Run vector field interpolation
+# =============================================================================
 
 for patient_id, folder in mat_files.items():
 
-#folder = mat_files['s1']
 
     # load data
     vectors_ds, vectors_si, vectors_gt, channel_locations_gt, channel_locations_ds = load_eeg_data(folder ,
@@ -76,8 +80,7 @@ for patient_id, folder in mat_files.items():
     results['f_pred'] = {'f_pred':f_pred}
     results['divergence'] = div
     results['curl'] = curl
-    results['error'] = {'rvgp': l2_error_ds, 'spline': l2_error_si}
-    
+    results['error'] = {'rvgp': l2_error_ds, 'spline': l2_error_si}   
     savemat(folder + 'results.mat', mdict=results, oned_as='row')
 
 
