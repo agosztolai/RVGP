@@ -29,7 +29,7 @@ def find_mat_files(directory):
                     mat_files[subdirectory_name] = root +  '/'
     return mat_files
 
-directory = '/media/robert/PortableSSD/ResearchProjects/RVGP/data/eeg_data/all_patients/' # Replace with your directory path
+directory = '../data/eeg_data/' # Replace with your directory path or load the data into the correct folder
 mat_files = find_mat_files(directory)
 
 
