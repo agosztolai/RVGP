@@ -11,7 +11,7 @@ The package is based on [GPFlow 2.0](https://gpflow.github.io/GPflow/2.9.0/index
 
 
 
-https://github.com/agosztolai/RVGP/assets/34625112/c911087d-068e-4ab2-8d90-e3f3bbe597bd
+https://github.com/agosztolai/RVGP/assets/34625112/744dd5d0-03b4-43ba-8720-d6993cacd076
 
 
 
