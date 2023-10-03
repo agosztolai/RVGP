@@ -15,7 +15,7 @@ If you find this package useful or inspirational, please cite our work as follow
 
 ```
 @misc{Peach2023,
-      title={Interpretable statistical representations of neural population dynamics and geometry}, 
+      title={Implicit Gaussian process representation of vector fields over arbitrary latent manifolds}, 
       author={Robert L. Peach, Matteo Vinao-Carl, Nir Grossman, Michael David, Emma Mallas, David J. Sharp, Paresh A. Malhotra, Pierre Vandergheynst and Adam Gosztolai},
       year={2023},
       archivePrefix={arXiv},
