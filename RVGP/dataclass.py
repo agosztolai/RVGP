@@ -35,10 +35,8 @@ class data:
         gauges, Sigma = tangent_frames(vertices, G, dim_man, n_neighbors*frac_geodesic_neighbours)
         R = connections(gauges, G, dim_man)
         
-        if not dim_man:
-            dim_man = manifold_dimension(Sigma, frac_explained=explained_variance)
-            
-        print('Manifold dimension is {}'.format(dim_man))
+        dim_man = manifold_dimension(Sigma, frac_explained=explained_variance)     
+        print('Predicted manifold dimension is {}'.format(dim_man))
         
         print('Compute Laplacians')
         L = compute_laplacian(G)
