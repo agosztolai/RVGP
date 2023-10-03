@@ -59,7 +59,7 @@ sample_ind, _ = furthest_point_sampling(X, stop_crit=0.015)
 X = X[sample_ind]
 ```
 
-Now you are ready to create a data object. Specify the number of eigenvectors you wish to use. Running the following code will compute the necessary objects including gauge fields, connections, connection Laplacian and eigendecomposition.
+Now you are ready to create a data object. Specify the number of eigenvectors you wish to use. Running the following code will compute the necessary objects, including gauge fields, connections, connection Laplacian and eigendecomposition.
 
 ```
 from RVGP import data
@@ -75,7 +75,7 @@ d = data(X, n_eigenpairs=n_eigenpairs)
 d.random_vector_field(seed=1)
 ```
 
-You can then run vector diffusion on it to 'smooth it out'. The parameter ```t``` is the diffusion time, with larger value resulting in smoother fields.
+You can then run vector diffusion on it to 'smooth it out'. The parameter ```t``` is the diffusion time, with a larger value resulting in smoother fields.
 
 ```
 d.smooth_vector_field(t=100)
