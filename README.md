@@ -9,6 +9,12 @@ You will find RVGP useful if you want to
 
 The package is based on [GPFlow 2.0](https://gpflow.github.io/GPflow/2.9.0/index.html).
 
+
+
+https://github.com/agosztolai/RVGP/assets/34625112/c911087d-068e-4ab2-8d90-e3f3bbe597bd
+
+
+
 ## Cite
 
 If you find this package useful or inspirational, please cite our work as follows
