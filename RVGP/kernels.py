@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import numpy as np
 import tensorflow as tf
 import gpflow
 from gpflow.utilities import positive
@@ -25,7 +26,7 @@ class ManifoldKernel(gpflow.kernels.Kernel):
         type of tensors, tf.float64 by default
         """
 
-    def __init__(self, eigenpairs, nu=3, kappa=4, sigma_f=1, typ='matern', dtype=tf.float64):
+    def __init__(self, eigenpairs, nu=3, kappa=4, sigma_f=1, scale=1, typ='matern', dtype=tf.float64):
 
         self.eigenvectors, self.eigenvalues = eigenpairs
         self.num_verticies = tf.cast(tf.shape(self.eigenvectors)[0], dtype=dtype)
@@ -39,12 +40,15 @@ class ManifoldKernel(gpflow.kernels.Kernel):
             self.nu = gpflow.Parameter(nu, dtype=self.dtype, transform=gpflow.utilities.positive(), name='nu')
         self.kappa = gpflow.Parameter(kappa, dtype=self.dtype, transform=gpflow.utilities.positive(), name='kappa')
         self.sigma_f = gpflow.Parameter(sigma_f, dtype=self.dtype, transform=gpflow.utilities.positive(), name='sigma_f')
+        self.scale = gpflow.Parameter(scale, dtype=self.dtype, transform=gpflow.utilities.positive(), name='scale')
+               
         super().__init__()
 
     def eval_S(self, typ = 'matern'):
         """Wilson Eq. (69)"""
-        if typ == 'matern':
-            S = tf.pow(self.eigenvalues + 2*self.nu/self.kappa**2, -self.nu)
+        if typ == 'matern':           
+            # diffuse
+            S = tf.pow(tf.exp(-self.eigenvalues * self.scale) + 2*self.nu/self.kappa**2, -self.nu)
             S = tf.multiply(S, self.num_verticies/tf.reduce_sum(S))
             S = tf.multiply(S, self.sigma_f)
             
