@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from dynamical_systems import FrictionPendulumSystem
+from RVGP.geometry import closest_manifold_point
 
 
 def plot_vector_field(X, 
@@ -154,19 +155,7 @@ def simulate_pendulum(n_points=15, n_traj=2, steps=2001, seed=0):
     system = FrictionPendulumSystem(mass=0.1, length=2.0, friction=0.03)
 
     vector_field = system.dynamics_gradient_field(positions, momentums)
-    
-    # initial_states = np.hstack([np.random.uniform(low=0,
-    #                                               high=2*np.pi, 
-    #                                               size=(n_traj,1)),
-    #                             np.random.uniform(low=-3,
-    #                                               high=3, 
-    #                                               size=(n_traj,1))])
-    
-    # initial_states = np.vstack([[2., 3.],
-    #                             [2., -3],
-    #                             [2.84599332,0],
-    #                             [3.41719199,0]])
-    
+        
     initial_states = np.hstack([positions, momentums])
     
     rollouts = system.rollout(initial_states, steps)
@@ -177,10 +166,63 @@ def simulate_pendulum(n_points=15, n_traj=2, steps=2001, seed=0):
     
     return grid, vector_field, rollouts
 
-# grid, vector_field, rollouts= simulate_pendulum()
 
-# fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-# plot_vector_field(grid, vector_field, color="black", ax=ax, scale=300, width=0.004)
-# for i in range(rollouts.shape[0]):
-#     plt.scatter(rollouts[i, :, 0], rollouts[i, :, 1], s=1)
-# plt.gca().set_aspect("equal")
+
+def integrate_trajectory(y0, d, manifold_GP, vector_GP, h=5, len_t=400,):
+    
+    trajectory = [y0]
+    vectors = []
+    
+    for i in range(len_t):
+        
+        # take the most recent manifold points
+        y = trajectory[-1]  
+        
+        # predict the eigenvectors: TU
+        _, x_ = closest_manifold_point(y.reshape(-1,1).T, d, nn=10)
+            
+        # predict the manifold point from TU (exponential map)
+        y_pred_, _ = manifold_GP.predict_f(x_) # should be similar to y
+        y_pred_ = y_pred_.numpy()
+        
+        # predict the vector from the TU
+        f_pred_, f_var = vector_GP.predict_f(x_.reshape(3,-1))
+        f_pred_ = f_pred_.numpy().T
+       
+        # perform euler iteration    
+        y1 = y_pred_ + h * f_pred_    
+        
+        # append to trajectory
+        trajectory.append(y1.squeeze())
+        vectors.append(f_pred_)
+    
+    # combine trajectories for output
+    trajectory = np.vstack(trajectory)[:-1,:]
+    vectors = np.vstack(vectors)
+    
+    return trajectory, vectors
+
+
+def plot_wrapped_data(x, y, c):
+    # Sort the data by x-values
+
+    # Initialize lists to store continuous segments
+    segments_x = [x[0]]
+    segments_y = [y[0]]
+
+    # Loop through the sorted points to find discontinuities
+    for i in range(1, len(x)):
+        dx = x[i] - x[i-1]
+        
+        # Check for discontinuity (wrap-around)
+        if np.abs(dx) > np.pi:
+            # Break the line at this point
+            plt.plot(segments_x, segments_y, marker='o',c=c, linewidth=2)
+            segments_x = [x[i]]
+            segments_y = [y[i]]
+        else:
+            segments_x.append(x[i])
+            segments_y.append(y[i])
+            
+    # Plot the last segment
+    plt.plot(segments_x, segments_y, marker='o',c=c, linewidth=2)
