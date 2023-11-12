@@ -28,8 +28,8 @@ d.smooth_vector_field(t=100)
 # Superresolution
 # =============================================================================
 train_ind =  np.random.choice(np.arange(len(X)),size=int(0.5*len(X)))
-train_x, train_y, train_f = d.evecs_Lc.reshape(d.n, -1)[train_ind], X[train_ind], d.vectors[train_ind]
-test_x, test_y, test_f = d.evecs_Lc.reshape(d.n, -1), X, d.vectors
+train_x, train_y, train_f = d.evecs_L.reshape(d.n, -1)[train_ind], X[train_ind], d.vectors[train_ind]
+test_x, test_y, test_f = d.evecs_L.reshape(d.n, -1), X, d.vectors
 
 # =============================================================================
 # Train GP for vector field over manifold
@@ -42,8 +42,8 @@ vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc),
 
 vector_field_GP = train_gp(train_x,
                            train_f,
-                           dim=vertices.shape[1],
-                           kernel=vector_field_kernel,
+                           #dim=vertices.shape[1],
+                           #kernel=vector_field_kernel,
                            noise_variance=0.001)
 
 # =============================================================================
