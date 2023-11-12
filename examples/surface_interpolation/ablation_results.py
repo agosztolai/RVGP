@@ -37,17 +37,17 @@ trials = 10
 
 ablation_eigenvectors = pickle.load(open('ablation_eigenvector_results.pkl', 'rb'))
 ablation_eigenvectors_results = process_results(ablation_eigenvectors, trials) 
-k = [1,2,5,10,100,200,300]
+k = [1,2,5,10,100]
 
 fig = plt.figure()
-ablation_eigenvectors_results = [r.mean(0) for r in ablation_eigenvectors_results]
+ablation_eigenvectors_results = [ablation_eigenvectors_results[i].mean(0) for i in range(len(k))]
 ablation_eigenvectors_results = np.array(ablation_eigenvectors_results)
 plt.errorbar(k, ablation_eigenvectors_results[:,0], yerr = ablation_eigenvectors_results[:,1].T)
 plt.xlabel('Number of eigenvectors (k)')
 plt.ylabel('Mean alignment')
 plt.ylim([0,1.1])
 plt.xscale('log')
-plt.savefig('ablation_eigenvectors.svg')
+plt.savefig('ablation_eigenvectors_2.svg')
 
 
 fig = plt.figure()
