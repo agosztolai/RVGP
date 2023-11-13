@@ -29,7 +29,7 @@ def process_results(ablation_results, trials):
 
 trials = 20
 
-ablation_density = pickle.load(open('ablation_density_results.pkl', 'rb'))
+ablation_density = pickle.load(open('ablation_density_results_lap.pkl', 'rb'))
 ablation_density_results = process_results(ablation_density, trials) 
 density = np.linspace(0.01,0.08,10)
 
