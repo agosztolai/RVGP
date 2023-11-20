@@ -26,17 +26,20 @@ class data:
                  dim_man=2, 
                  n_neighbors=10,
                  frac_geodesic_neighbours=1.5,
-                 explained_variance=0.9,
+                 explained_variance=0.8,
                  n_eigenpairs=None):
         
         print('Fit graph')
         G = manifold_graph(vertices,n_neighbors=n_neighbors)
-        print('Fit tangent spaces and connections')
-        gauges, Sigma = tangent_frames(vertices, G, dim_man, n_neighbors*frac_geodesic_neighbours)
-        R = connections(gauges, G, dim_man)
+        print('Fit tangent spaces')
+        gauges, Sigma = tangent_frames(vertices, G, vertices.shape[1], n_neighbors*frac_geodesic_neighbours)
         
-        dim_man = manifold_dimension(Sigma, frac_explained=explained_variance)     
+        dim_man = manifold_dimension(Sigma, frac_explained=explained_variance)
+        gauges = gauges[:,:,:dim_man]
         print('Predicted manifold dimension is {}'.format(dim_man))
+        
+        R = connections(gauges, G, dim_man) 
+        print('Fit connections')
         
         print('Compute Laplacians')
         L = compute_laplacian(G)
