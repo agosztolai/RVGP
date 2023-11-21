@@ -23,7 +23,7 @@ random.seed(10)
 # =============================================================================
 # Generate data
 # =============================================================================
-n_points=60 #number of gridpoints
+n_points=40 #number of gridpoints
 n_traj=2 #number of simulated trajectories
 n_eigenpairs=300 # 300
 steps=2
@@ -110,7 +110,7 @@ f_pred = f_pred.numpy().reshape(d.n, -1)
 # Simulate trajectory
 # =============================================================================
 
-len_t = 300 # length of trajectory
+len_t = 30 # length of trajectory
 h = 5 # step size 
 
 # initial starting positions of trajectory on manifold

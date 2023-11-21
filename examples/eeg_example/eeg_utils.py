@@ -16,18 +16,26 @@ from RVGP.kernels import ManifoldKernel
 
 from RVGP import data, train_gp
 
-from scipy.spatial import KDTree
 from tqdm import tqdm
+from sklearn.cluster import KMeans
+from scipy.spatial import cKDTree, KDTree
+import random 
 
-
-def interpolate_time_range(timepoints, X, f, train_idx, test_idx,):
+def interpolate_time_range(timepoints, X, f, train_idx, test_idx, predict_manifold=False):
     
-    d = data(X, n_eigenpairs=10)
+    if predict_manifold: # use only the channels with vectors to approximate manifold
+        d = data(X[train_idx,:], n_eigenpairs=30)
+    else: # us all channels to approximate latent manifold
+        d = data(X, n_eigenpairs=10)
     
     f_pred = np.zeros([len(timepoints), X.shape[0], X.shape[1]])
     for t, time in enumerate(tqdm(timepoints)):
-        d.vectors = f[int(time),:,:]
-        f_pred[t,:,:] = interpolate_timepoint(d, train_idx, test_idx, project=False)
+        d.vectors = f[int(time),:,:]        
+        f_pred[t,:,:] = interpolate_timepoint(d,
+                                              train_idx,
+                                              test_idx,
+                                              project=False,
+                                              predict_manifold=predict_manifold)
     
     return f_pred
 
@@ -80,6 +88,7 @@ def compute_vectorfield_features(positions, vectors, k=5):
 def interpolate_timepoint(d,
                           train_idx,
                           test_idx,
+                          predict_manifold=False,
                           project=True,
                           t=0,
                           plot=False,
@@ -87,8 +96,31 @@ def interpolate_timepoint(d,
                           dim_man=2,
                           n_eigenpairs = 50
                           ):
+    
+    # fit GP to manifold and then find manifold points closest to ground truth coordinates
+    if predict_manifold:
+        
+        positional_encoding = d.evecs_Lc.reshape(d.n, -1)
+        kernel = ManifoldKernel((d.evecs_Lc.reshape(d.n, -1), np.tile(d.evals_Lc,3)), 
+                                  nu=3/2, 
+                                  kappa=5, 
+                                  sigma_f=1)
 
-       
+        manifold_GP = train_gp(positional_encoding,
+                                d.vertices,
+                                kernel=kernel,
+                                n_inducing_points=100,
+                                noise_variance=0.001)
+        
+        # generate new positional encodings based on local proximity 
+        sampled = generate_new_points(positional_encoding, num_new_points=2000, k=5)
+        
+        # predict xyz points - this isn't perfect and ends up with some inside the head
+        pred_xyz, _ = manifold_GP.predict_f(sampled)
+        
+
+
+
     if project:
         d.vectors = project_to_local_frame(d.vectors, d.gauges[train_idx,:,:])        
         
@@ -155,6 +187,87 @@ def plot_interpolation_topomap(X, data, channel_locations):
     # plot div
     evoked = mne.EvokedArray(data, info)
     evoked.plot_topomap(ch_type='eeg',times=[0], size=4, res=256)
+
+def sample_evenly_from_manifold(points, num_samples=32):
+    """
+    Sample points evenly from a 3D manifold using K-means clustering,
+    and return both the sampled points and the indices of these points in the original array.
+
+    :param points: numpy array of points on the manifold
+    :param num_samples: number of points to sample, default is 32
+    :return: tuple of numpy array of sampled points and numpy array of their indices
+    """
+    # Ensure that the number of clusters does not exceed the number of points
+    num_clusters = min(num_samples, len(points))
+
+    # Apply K-means clustering
+    kmeans = KMeans(n_clusters=num_clusters, n_init='auto')
+    kmeans.fit(points)
+
+    # Get the centroids of the clusters
+    centroids = kmeans.cluster_centers_
+
+    # Create a KDTree for efficient nearest neighbor search
+    tree = cKDTree(points)
+
+    # Find the indices of the closest points in 'points' to each centroid
+    _, indices = tree.query(centroids, k=1)
+
+    # Initialize arrays for additional samples and their indices
+    additional_samples = []
+    additional_indices = []
+
+    # If the desired number of samples is greater than the number of clusters,
+    # sample additional points randomly from each cluster
+    if num_samples > num_clusters:
+        labels = kmeans.labels_
+        for i in range(num_clusters):
+            cluster_points_indices = np.where(labels == i)[0]
+            n_samples = int(np.ceil(num_samples / num_clusters)) - 1  # Subtract 1 for the centroid
+            sampled_indices = np.random.choice(cluster_points_indices, n_samples, replace=True)
+            additional_indices.extend(sampled_indices)
+            additional_samples.extend(points[sampled_indices])
+
+    # Combine centroid points and additional samples
+    sampled_points = np.concatenate([centroids, points[additional_indices][:num_samples - num_clusters]])
+    sampled_indices = np.concatenate([indices, additional_indices])[:num_samples]
+    
+    # Sort the indices and reorder the points accordingly
+    sorted_indices = np.argsort(sampled_indices)
+    sampled_indices = sampled_indices[sorted_indices]
+    sampled_points = sampled_points[sorted_indices]
+
+    # Convert indices to integers
+    sampled_indices = sampled_indices.astype(int)
+    return sampled_points, sampled_indices
+
+def generate_new_points(data, num_new_points=10, k=5):
+    # Initialize KDTree
+    tree = KDTree(data)
+
+    new_points = []
+    for _ in range(num_new_points):
+        # Randomly select a reference point
+        ref_point_index = np.random.randint(data.shape[0])
+        ref_point = data[ref_point_index]
+
+        # Find k-nearest neighbors (including the point itself)
+        distances, indices = tree.query(ref_point, k=k+1)
+
+        # Exclude the point itself from the neighbors
+        indices = indices[indices != ref_point_index]
+
+        # Ensure at least 1 neighbor is always included
+        num_neighbors_to_average = random.randint(1, min(len(indices), 2))
+        selected_indices = np.random.choice(indices, num_neighbors_to_average, replace=False)
+
+        # Compute the average point
+        average_point = np.mean(data[selected_indices], axis=0)
+
+        new_points.append(average_point)
+
+    return np.array(new_points)
+
 
 def load_eeg_data(folder, start_time=0, end_time=-1):
     
