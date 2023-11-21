@@ -15,7 +15,7 @@ from sklearn.metrics import pairwise_distances
 # =============================================================================
 n_eigenpairs=100
 vertices, faces = load_mesh('bunny')
-trials=20
+trials=10
 
 # =============================================================================
 # Superresolution

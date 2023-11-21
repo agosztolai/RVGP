@@ -42,7 +42,7 @@ density = np.linspace(0.01,0.08,10)
 
 trials = 20
 
-noise_perturbation = pickle.load(open('noise_perturbation.pkl', 'rb'))
+noise_perturbation = pickle.load(open('noise_perturbation_2.pkl', 'rb'))
 noise_perturbation_results = process_results(noise_perturbation, trials) 
 alpha = np.linspace(0.005,0.05,10)
 

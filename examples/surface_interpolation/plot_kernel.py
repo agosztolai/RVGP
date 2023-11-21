@@ -7,14 +7,12 @@ from RVGP import data, train_gp
 from RVGP.kernels import ManifoldKernel
 import polyscope as ps
 import numpy as np
-from sklearn.metrics import pairwise_distances
 
 # =============================================================================
 # Parameters and data
 # =============================================================================
 n_eigenpairs=100
-n_neighbors=10
-vertices, faces = load_mesh('bunny') #see /examples/data for more objects
+vertices, faces = load_mesh('sphere') #see /examples/data for more objects
 
 # =============================================================================
 # Subsample 
@@ -24,11 +22,6 @@ X = vertices[sample_ind]
 
 train_ind =  np.random.choice(np.arange(len(X)), size=int(0.5*len(X)))
 test_ind = [i for i in range(len(X)) if i not in train_ind]
-# =============================================================================
-# Add noise
-# =============================================================================
-# diam = pairwise_distances(vertices).max()
-# X[test_ind] += 0.04*diam*np.random.normal(size=X[test_ind].shape)
 
 # =============================================================================
 # Create data object
@@ -36,12 +29,6 @@ test_ind = [i for i in range(len(X)) if i not in train_ind]
 d = data(X, faces, n_eigenpairs=n_eigenpairs)
 d.random_vector_field(seed=1)
 d.smooth_vector_field(t=100)
-
-# =============================================================================
-# Superresolution
-# =============================================================================
-train_x, train_y, train_f = d.evecs_Lc.reshape(d.n, -1)[train_ind], X[train_ind], d.vectors[train_ind]
-test_x, test_y, test_f = d.evecs_Lc.reshape(d.n, -1)[test_ind], X[test_ind], d.vectors[test_ind]
 
 # =============================================================================
 # Train GP for vector field over manifold
@@ -52,29 +39,43 @@ vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc),
                                      typ='matern',
                                      sigma_f=1.)
 
-vector_field_GP = train_gp(train_x,
-                           train_f,
+vector_field_GP = train_gp(d.evecs_Lc.reshape(d.n, -1),
+                           d.vectors,
                            dim=vertices.shape[1],
                            kernel=vector_field_kernel,
                            noise_variance=0.001)
 
-
 # =============================================================================
 # Predict with GPs
 # =============================================================================
-n = len(test_x)
-test_x = test_x.reshape(-1, n_eigenpairs)
+test_x = d.evecs_Lc
 f_pred_mean, _ = vector_field_GP.predict_f(test_x)
-f_pred_mean = f_pred_mean.numpy().reshape(n, -1)
-
+f_pred_mean = f_pred_mean.numpy().reshape(d.n, -1)
 
 # =============================================================================
-# Plot
+# Plot kernel
 # =============================================================================
+
+K = vector_field_kernel(d.evecs_Lc)
+n, dim = X.shape
+K = K.numpy().reshape(n,dim,n,dim).swapaxes(1,2)
+K = K[0]
+
+for i, K_ in enumerate(K):
+    _, K_ = np.linalg.eig(K_)
+    K[i] = K_
+
 ps.init()
 ps_mesh = ps.register_surface_mesh("Surface points", vertices, faces)
-ps_cloud = ps.register_point_cloud("Training points", train_y)
-ps_cloud.add_vector_quantity("Training vectors", d.vectors[train_ind], color=(227, 156, 28), enabled=True)
-ps_cloud = ps.register_point_cloud("Predicted points", test_y)
-ps_cloud.add_vector_quantity("Predicted vectors", f_pred_mean, color=(227, 28, 28),  enabled=True)
+ps_cloud = ps.register_point_cloud("Training points", X)
+ps_cloud.add_vector_quantity("Training vectors", d.vectors, color=(0, 0, 0), enabled=True)
+
+ps_cloud_1 = ps.register_point_cloud("Points 1", X)
+ps_cloud_1.add_vector_quantity("Kernel 1", K[:,:,0], color=(0, 0, 256), enabled=True)
+
+ps_cloud_2 = ps.register_point_cloud("Points 2", X)
+ps_cloud_2.add_vector_quantity("TKernel 2", K[:,:,1], color=(0, 256, 0), enabled=True)
+
+ps_cloud_3 = ps.register_point_cloud("Points 3", X)
+ps_cloud_3.add_vector_quantity("TKernel 3", K[:,:,2], color=(258, 0, 0), enabled=True)
 ps.show()
