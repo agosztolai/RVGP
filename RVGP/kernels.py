@@ -42,12 +42,12 @@ class ManifoldKernel(gpflow.kernels.Kernel):
     def eval_S(self, typ = 'matern'):
         """Wilson Eq. (69)"""
         if typ == 'matern':
-            S = tf.pow(self.eigenvalues + 2*self.nu/self.kappa**2, -self.nu)
+            S = tf.pow(self.eigenvalues + 2*self.nu/(self.kappa**2), -self.nu)
             S = tf.multiply(S, self.num_verticies/tf.reduce_sum(S))
             S = tf.multiply(S, self.sigma_f)
             
         elif typ == 'se':
-            S = tf.exp(-0.5*self.eigenvalues*self.kappa)
+            S = tf.exp(-0.5*self.eigenvalues*self.kappa**2)
             S = tf.multiply(S, self.num_verticies/tf.reduce_sum(S))
             S = tf.multiply(S, self.sigma_f)
         

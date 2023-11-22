@@ -3,10 +3,11 @@
 
 from RVGP.utils import load_mesh
 from RVGP.geometry import furthest_point_sampling
-from RVGP import data, train_gp
+from RVGP import data
 from RVGP.kernels import ManifoldKernel
 import polyscope as ps
 import numpy as np
+import gpflow
 
 # =============================================================================
 # Parameters and data
@@ -31,19 +32,19 @@ d.random_vector_field(seed=1)
 d.smooth_vector_field(t=100)
 
 # =============================================================================
-# Train GP for vector field over manifold
+# Define GP for vector field over manifold
 # =============================================================================
 vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
                                      nu=3/2, 
-                                     kappa=5, 
+                                     kappa=3, 
                                      typ='matern',
                                      sigma_f=1.)
 
-vector_field_GP = train_gp(d.evecs_Lc.reshape(d.n, -1),
-                           d.vectors,
-                           dim=vertices.shape[1],
-                           kernel=vector_field_kernel,
-                           noise_variance=0.001)
+vector_field_GP = gpflow.models.GPR((d.evecs_Lc.reshape(d.n*vertices.shape[1], -1), 
+                                     d.vectors.reshape(d.n*vertices.shape[1], -1)), 
+                        kernel=vector_field_kernel, 
+                        noise_variance=0.001,
+                        )
 
 # =============================================================================
 # Predict with GPs
@@ -55,20 +56,28 @@ f_pred_mean = f_pred_mean.numpy().reshape(d.n, -1)
 # =============================================================================
 # Plot kernel
 # =============================================================================
-
 K = vector_field_kernel(d.evecs_Lc)
 n, dim = X.shape
-K = K.numpy().reshape(n,dim,n,dim).swapaxes(1,2)
-K = K[0]
+K = K.numpy().reshape(n,dim,n,dim).swapaxes(1,2).swapaxes(2,3)
+K = K[100]
 
-for i, K_ in enumerate(K):
-    _, K_ = np.linalg.eig(K_)
-    K[i] = K_
+# for i, K_ in enumerate(K):
+#     u, v = np.linalg.eig(K_)
+#     idx = np.abs(u).argsort()[::-1]   
+#     u = u[idx]
+#     v = v[:,idx]
+#     if np.iscomplex(u).any():
+#         K[i] = 0
+#     else:
+#         K[i] = u/u.max()*v
 
 ps.init()
 ps_mesh = ps.register_surface_mesh("Surface points", vertices, faces)
-ps_cloud = ps.register_point_cloud("Training points", X)
-ps_cloud.add_vector_quantity("Training vectors", d.vectors, color=(0, 0, 0), enabled=True)
+
+ps_cloud = ps.register_point_cloud("Reference point", X[[100]])
+
+# ps_cloud = ps.register_point_cloud("Training points", X)
+# ps_cloud.add_vector_quantity("Training vectors", d.vectors, color=(0, 0, 0), enabled=True)
 
 ps_cloud_1 = ps.register_point_cloud("Points 1", X)
 ps_cloud_1.add_vector_quantity("Kernel 1", K[:,:,0], color=(0, 0, 256), enabled=True)
