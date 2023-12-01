@@ -40,7 +40,7 @@ def vector_diffusion(x, t, Lc, L=None, method="spectral", normalise=True):
 
     if method == "spectral":
         assert len(Lc) == 2, "Lc must be a tuple of eigenvalues, eigenvectors!"
-        nd = Lc[0].shape[0]
+        nd = Lc[1].shape[0]
     else:
         nd = Lc.shape[0]
 

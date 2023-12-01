@@ -93,10 +93,10 @@ class data:
         
         np.random.seed(seed)
         
-        vectors = np.random.uniform(size=(len(self.vertices), 
-                                          self.vertices.shape[1])
+        vectors = np.random.uniform(low=-0.5,
+                                    high=0.5,
+                                    size=(len(self.vertices), self.vertices.shape[1])
                                     )
-        vectors -= .5
         vectors = project_to_manifold(vectors, self.gauges[...,:self.dim_man])
         vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
         
@@ -108,7 +108,11 @@ class data:
     
             """Smooth vector field over manifold"""
             vectors = express_in_local_frame(self.vectors, self.gauges)
-            vectors = vector_diffusion(vectors, t, L=self.L, Lc=self.Lc, method="matrix_exp")
+            vectors = vector_diffusion(vectors, 
+                                       t, 
+                                       L=self.L, 
+                                       Lc=self.Lc, 
+                                       method="matrix_exp")
             vectors = express_in_local_frame(vectors, self.gauges, reverse=True)
         
             self.vectors = vectors
