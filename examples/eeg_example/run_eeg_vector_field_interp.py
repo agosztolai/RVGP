@@ -16,7 +16,6 @@ np.random.seed(0)
 # Load EEG vector field data
 # =============================================================================
 
-
 def find_mat_files(directory):
     mat_files = {}
     for root, dirs, files in os.walk(directory):

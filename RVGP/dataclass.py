@@ -10,7 +10,7 @@ from RVGP.geometry import (manifold_graph,
                            compute_laplacian,
                            compute_connection_laplacian,
                            compute_spectrum,
-                           project_to_local_frame,
+                           express_in_local_frame,
                            project_to_manifold,
                            manifold_dimension
                            )
@@ -30,7 +30,8 @@ class data:
                  n_eigenpairs=None):
         
         print('Fit graph')
-        G = manifold_graph(vertices,n_neighbors=n_neighbors)
+        G = manifold_graph(vertices, n_neighbors=n_neighbors)
+        
         print('Fit tangent spaces')
         gauges, Sigma = tangent_frames(vertices, G, vertices.shape[1], n_neighbors*frac_geodesic_neighbours)
         
@@ -93,10 +94,13 @@ class data:
     def random_vector_field(self, seed=0):
         """Generate random vector field over manifold"""
         
-        np.random.seed(0)
+        np.random.seed(seed)
         
-        vectors = np.random.uniform(size=(len(self.vertices), 3))-.5
-        vectors = project_to_manifold(vectors, self.gauges[...,:2])
+        vectors = np.random.uniform(size=(len(self.vertices), 
+                                          self.vertices.shape[1])
+                                    )
+        vectors -= .5
+        vectors = project_to_manifold(vectors, self.gauges[...,:self.dim_man])
         vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
         
         self.vectors = vectors
@@ -106,9 +110,9 @@ class data:
         if hasattr(self, 'vectors'):
     
             """Smooth vector field over manifold"""
-            vectors = project_to_local_frame(self.vectors, self.gauges)
+            vectors = express_in_local_frame(self.vectors, self.gauges)
             vectors = vector_diffusion(vectors, t, L=self.L, Lc=self.Lc, method="matrix_exp")
-            vectors = project_to_local_frame(vectors, self.gauges, reverse=True)
+            vectors = express_in_local_frame(vectors, self.gauges, reverse=True)
         
             self.vectors = vectors
         else:
