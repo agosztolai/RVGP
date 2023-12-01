@@ -4,8 +4,8 @@ RVGP is a Generalised Gaussian process for learning vector fields over manifolds
 
 You will find RVGP useful if you want to 
 1. Learn and interpolate vector fields from sparse samples
-2. Infer the vector field in out-of-sample regions in order to recover the singularities
-3. Globally smoothen noisy vector fields in order to better preserve singularities.
+2. Infer the vector field in out-of-sample regions to recover the singularities
+3. Globally smoothen noisy vector fields to better preserve singularities.
 
 The package is based on [GPFlow 2.0](https://gpflow.github.io/GPflow/2.9.0/index.html).
 
@@ -53,7 +53,6 @@ Before you fit RVGP, it is a good idea to perform furthest point sampling to eve
 
 ```
 from RVGP.geometry import furthest_point_sampling
-
 sample_ind, _ = furthest_point_sampling(X, stop_crit=0.015)
 X = X[sample_ind]
 ```
@@ -94,7 +93,7 @@ test_ind = [i for i in range(len(X)) if i not in train_ind]
 f_pred_mean, _ = vector_field_GP.transform(d, test_ind)
 ```
 
-For ```test_ind``` you can either use integers, which will be interpreted as indices of nodes, or floats, which will be interpreted as positional encoding over the tangent bundle in spectral domain.
+For ```test_ind```, you can either use integers, which will be interpreted as indices of nodes, or floats, which will be interpreted as positional encoding over the tangent bundle in the spectral domain.
 
 We recommend using the [Polyscope](https://polyscope.run) package to perform beautiful visualisations. See examples for how to use it.
 
