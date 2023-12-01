@@ -47,10 +47,9 @@ Briefly, RVGP takes the following inputs
 
 1. `X` - an `nxd` array of points to define the points cloud, which are considered to be sampled from a smooth manifold.
 2. `vectors` - an `nxd` array, defining a signal over the manifold.
-3. dim_man - dimension of the manifold.
-4. (optional) explained_variance - This will be used to estimate the dimension of the manifold. You may want to change ```dim_man``` if the predicted dimension is different.
+3. (optional) explained_variance - This will be used to estimate the manifold dimension. You may want to change ```dim_man``` if the predicted dimension differs.
 
-Before you fit RVGP, it is a good idea to perform furthest point sampling to even out sample points. This ensured that one region of the manifold will not be overfit. 
+Before you fit RVGP, it is a good idea to perform furthest point sampling to even out sample points. This ensured that any particular region of the manifold would not be overfit. 
 
 ```
 from RVGP.geometry import furthest_point_sampling
@@ -59,61 +58,43 @@ sample_ind, _ = furthest_point_sampling(X, stop_crit=0.015)
 X = X[sample_ind]
 ```
 
-Now you are ready to create a data object. Specify the number of eigenvectors you wish to use. Running the following code will compute the necessary objects, including gauge fields, connections, connection Laplacian and eigendecomposition.
+Now, you are ready to create a data object. Specify the number of eigenvectors you wish to use. The following code will compute the necessary objects, including gauge fields, connections, connection Laplacian and eigendecomposition.
 
 ```
-from RVGP import data
+import RVGP
 n_eigenpairs = 50
-d = data(X, vectors=vectors, n_eigenpairs=n_eigenpairs)
+d = RVGP.create_data_object(X, vectors=vectors, n_eigenpairs=n_eigenpairs)
 ```
 
 If you just want to play around and do not have a vector field, you can create one by sampling uniformly from the sphere
 
 ```
 n_eigenpairs = 50
-d = data(X, n_eigenpairs=n_eigenpairs)
+d = RVGP.create_data_object((X, n_eigenpairs=n_eigenpairs)
 d.random_vector_field(seed=1)
 ```
 
-You can then run vector diffusion on it to 'smooth it out'. The parameter ```t``` is the diffusion time, with a larger value resulting in smoother fields.
+You can then run vector diffusion to 'smooth it out'. The parameter ```t``` is the diffusion time, with a larger value resulting in smoother fields.
 
 ```
 d.smooth_vector_field(t=100)
 ```
 
-You are ready to train! First, define a kernel using the eigenvectors of the connection Laplacian operator. You can leave the parameters as is, as they are just initial conditions for the optimiser. You can also just leave the ```kernel``` argument empty to use radial basis functions or specify your favourite kernel from the GPFlow 2.0 library. 
+You are ready to train! The following code will train on 50% of the points.
 
 ```
-from RVGP.kernels import ManifoldKernel
-
-vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
-                                     nu=3/2, 
-                                     kappa=5, 
-                                     typ='matern',
-                                     sigma_f=1.)
+train_ind =  np.random.choice(np.arange(len(X)), size=int(0.5*len(X)))
+vector_field_GP = RVGP.fit(d, train_ind=train_ind, noise_variance=0.001)
 ```
 
-Go train! If you are uncertain about your data, you can set the noise_variance a bit higher. The ```dim``` argument is just the dimension of the ambient space.
+Finally, test your trained GP on the remainder of the points.
 
 ```
-from RVGP import train_gp
-train_x, train_f = d.evecs_Lc.reshape(d.n, -1), d.vectors
-vector_field_GP = train_gp(train_x,
-                           train_f,
-                           dim=vertices.shape[1],
-                           kernel=vector_field_kernel,
-                           noise_variance=0.001)
+test_ind = [i for i in range(len(X)) if i not in train_ind]
+f_pred_mean, _ = vector_field_GP.transform(d, test_ind)
 ```
 
-Finally, test your trained GP
-
-```
-test_x = d.evecs_Lc.reshape(d.n, -1)
-n = len(test_x)
-test_x = test_x.reshape(-1, n_eigenpairs)
-f_pred_mean, _ = vector_field_GP.predict_f(test_x)
-f_pred_mean = f_pred_mean.numpy().reshape(n, -1)
-```
+For ```test_ind``` you can either use integers, which will be interpreted as indices of nodes, or floats, which will be interpreted as positional encoding over the tangent bundle in spectral domain.
 
 We recommend using the [Polyscope](https://polyscope.run) package to perform beautiful visualisations. See examples for how to use it.
 
