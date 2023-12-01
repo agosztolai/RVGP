@@ -1,20 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 from scipy.io import loadmat
 import scipy.sparse as sp
 import pandas as pd
 import numpy as np
 
-
 import mne
 
-from RVGP.geometry import (compute_laplacian,
-                           project_to_local_frame,
-                           )
+from RVGP.geometry import compute_laplacian, project_to_local_frame
 from RVGP.smoothing import vector_diffusion
 from RVGP.plotting import graph
-from RVGP.kernels import ManifoldKernel
-
-from RVGP import data, train_gp
+import RVGP
 
 from scipy.spatial import KDTree
 from tqdm import tqdm
@@ -22,7 +19,7 @@ from tqdm import tqdm
 
 def interpolate_time_range(timepoints, X, f, train_idx, test_idx,):
     
-    d = data(X, n_eigenpairs=10)
+    d = RVGP.create_data_object(X, n_eigenpairs=10)
     
     f_pred = np.zeros([len(timepoints), X.shape[0], X.shape[1]])
     for t, time in enumerate(tqdm(timepoints)):
@@ -101,27 +98,12 @@ def interpolate_timepoint(d,
             
         d.vectors = project_to_local_frame(d.vectors, d.gauges[train_idx,:,:], reverse=True)
     
-    # Custom kernel   
-    kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
-                            nu=3/2, 
-                            kappa=5, 
-                            sigma_f=1)  
-    
-    # Train GP for vector field over manifold
-    x_train = d.evecs_Lc.reshape(d.n, -1)[train_idx,:]    
-    sp_to_vector_field_gp = train_gp(x_train, 
-                                     d.vectors,
-                                     dim=d.vertices.shape[1],
+    sp_to_vector_field_gp = RVGP.fit(d, 
+                                     train_ind=train_idx, 
                                      epochs=100,
-                                     kernel=kernel,
-                                     noise_variance=0.001,
-                                     compute_error=False)
-
-           
-    # Test performance   
-    x_test = d.evecs_Lc.reshape(d.n, -1)[test_idx,:]      
-    f_pred, _ = sp_to_vector_field_gp.predict_f(x_test.reshape(len(test_idx)*d.vertices.shape[1], -1))
-    f_pred = f_pred.numpy().reshape(len(test_idx), -1)    
+                                     noise_variance=0.001)
+                   
+    f_pred, _ = sp_to_vector_field_gp.transform(d, test_idx)
     
     return f_pred
 

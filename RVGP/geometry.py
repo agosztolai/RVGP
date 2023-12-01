@@ -92,7 +92,7 @@ def manifold_dimension(Sigma, frac_explained=0.9):
     var_exp = Sigma.mean(0) - Sigma.std(0)
     dim_man = np.where(var_exp >= frac_explained)[0][0] + 1
 
-    print("\nFraction of variance explained: ", var_exp)
+    print("Fraction of variance explained: ", var_exp)
 
     return int(dim_man)
 
@@ -123,20 +123,20 @@ def manifold_graph(X, typ = 'knn', n_neighbors=5):
     return G
 
 
-def furthest_point_sampling(x, N=None, stop_crit=0.1, start_idx=0):
+def furthest_point_sampling(x, N=None, spacing=0.1, start_idx=0):
     """A greedy O(N^2) algorithm to do furthest points sampling
 
     Args:
         x (nxdim matrix): input data
         N (int): number of sampled points
-        stop_crit: when reaching this fraction of the total manifold diameter, we stop sampling
+        spacing: when reaching this fraction of the total manifold diameter, we stop sampling
         start_idx: index of starting node
 
     Returns:
         perm: node indices of the N sampled points
         lambdas: list of distances of furthest points
     """
-    if stop_crit == 0.0:
+    if spacing == 0.0:
         return np.arange(len(x)), None
 
     D = pairwise_distances(x)
@@ -154,7 +154,7 @@ def furthest_point_sampling(x, N=None, stop_crit=0.1, start_idx=0):
         ds = np.minimum(ds, D[idx, :])
 
         if N is None:
-            if lambdas[i] / diam < stop_crit:
+            if lambdas[i] / diam < spacing:
                 perm = perm[:i]
                 lambdas = lambdas[:i]
                 break

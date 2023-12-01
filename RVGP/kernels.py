@@ -9,8 +9,7 @@ class ManifoldKernel(gpflow.kernels.Kernel):
 
     Attributes
     ----------
-    eigenpairs : tuple
-        Truncated tuple returned by tf.linalg.eigh applied to the Laplacian of the graph.
+    data : data object
     typ : str
         Type of kernel. 'matern' or 'SE'
     nu : float
@@ -23,9 +22,9 @@ class ManifoldKernel(gpflow.kernels.Kernel):
         type of tensors, tf.float64 by default
         """
 
-    def __init__(self, eigenpairs, nu=3, kappa=4, sigma_f=1, typ='matern', dtype=tf.float64):
+    def __init__(self, data, nu=3, kappa=4, sigma_f=1, typ='matern', dtype=tf.float64):
 
-        self.eigenvectors, self.eigenvalues = eigenpairs
+        self.eigenvectors, self.eigenvalues = data.evecs_Lc, data.evals_Lc
         self.num_verticies = tf.cast(tf.shape(self.eigenvectors)[0], dtype=dtype)
         self.dtype = dtype
         self.typ = typ

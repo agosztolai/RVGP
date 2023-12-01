@@ -21,7 +21,6 @@ from RVGP.smoothing import vector_diffusion
 class data:
     def __init__(self, 
                  vertices,
-                 faces=None,
                  vectors=None,
                  dim_man=2, 
                  n_neighbors=10,
@@ -61,7 +60,6 @@ class data:
         
         (
             self.vertices,
-            self.faces,
             self.n,
             self.dim_man,
             self.G, 
@@ -76,7 +74,6 @@ class data:
             self.vectors
         ) = (
                 vertices,
-                faces,
                 vertices.shape[0],
                 dim_man,
                 G, 
