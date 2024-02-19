@@ -24,9 +24,7 @@ If you find this package useful or inspirational, please cite our work as follow
       title={Implicit Gaussian process representation of vector fields over arbitrary latent manifolds}, 
       author={Robert L. Peach and Matteo Vinao-Carl and Nir Grossman and Michael David and Emma Mallas and David Sharp and Paresh A. Malhotra and Pierre Vandergheynst and Adam Gosztolai},
       year={2023},
-      eprint={2309.16746},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+      journal={ICLR}
 }
 ```
 
