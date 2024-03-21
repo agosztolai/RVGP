@@ -33,7 +33,7 @@ If you find this package useful or inspirational, please cite our work as follow
 Create a new Anaconda environment. Then, install by running inside the main folder
 
 ```
-pip install numpy, cython
+pip install numpy cython
 pip install -e .
 ```
 
