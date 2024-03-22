@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import RVGP
 from RVGP.utils import load_mesh
 from RVGP.geometry import furthest_point_sampling
-from RVGP import data
 from RVGP.kernels import ManifoldKernel
 import polyscope as ps
 import numpy as np
@@ -18,7 +18,7 @@ vertices, faces = load_mesh('sphere') #see /examples/data for more objects
 # =============================================================================
 # Subsample 
 # =============================================================================
-sample_ind, _ = furthest_point_sampling(vertices, stop_crit=0.05)
+sample_ind, _ = furthest_point_sampling(vertices, spacing=0.05)
 X = vertices[sample_ind]
 
 train_ind =  np.random.choice(np.arange(len(X)), size=int(0.5*len(X)))
@@ -27,14 +27,14 @@ test_ind = [i for i in range(len(X)) if i not in train_ind]
 # =============================================================================
 # Create data object
 # =============================================================================
-d = data(X, faces, n_eigenpairs=n_eigenpairs)
+d = RVGP.create_data_object(X, faces, n_eigenpairs=n_eigenpairs)
 d.random_vector_field(seed=1)
 d.smooth_vector_field(t=100)
 
 # =============================================================================
 # Define GP for vector field over manifold
 # =============================================================================
-vector_field_kernel = ManifoldKernel((d.evecs_Lc, d.evals_Lc), 
+vector_field_kernel = ManifoldKernel(d, 
                                      nu=3/2, 
                                      kappa=3, 
                                      typ='matern',
@@ -49,9 +49,9 @@ vector_field_GP = gpflow.models.GPR((d.evecs_Lc.reshape(d.n*vertices.shape[1], -
 # =============================================================================
 # Predict with GPs
 # =============================================================================
-test_x = d.evecs_Lc
-f_pred_mean, _ = vector_field_GP.predict_f(test_x)
-f_pred_mean = f_pred_mean.numpy().reshape(d.n, -1)
+# test_x = d.evecs_Lc
+# f_pred_mean, _ = vector_field_GP.predict_f(test_x)
+# f_pred_mean = f_pred_mean.numpy().reshape(d.n, -1)
 
 # =============================================================================
 # Plot kernel
