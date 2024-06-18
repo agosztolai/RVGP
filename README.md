@@ -1,4 +1,4 @@
-[paper](https://openreview.net/forum?id=YEPlTU5mZC) [summary talk](https://iclr.cc/virtual/2024/poster/18431)
+[[paper]](https://openreview.net/forum?id=YEPlTU5mZC) [[summary talk]](https://iclr.cc/virtual/2024/poster/18431)
 
 # RVGP - Riemannian manifold vector field Gaussian Processes
 
