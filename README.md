@@ -1,3 +1,5 @@
+(summary talk)[https://iclr.cc/virtual/2024/poster/18431]
+
 # RVGP - Riemannian manifold vector field Gaussian Processes
 
 RVGP is a Generalised Gaussian process for learning vector fields over manifolds. It does so by generalising Gaussian processes using the connection Laplacian operator, which introduces smoothness in the tangent bundle of manifolds.
@@ -9,11 +11,7 @@ You will find RVGP useful if you want to
 
 The package is based on [GPFlow 2.0](https://gpflow.github.io/GPflow/2.9.0/index.html).
 
-
-
 https://github.com/agosztolai/RVGP/assets/34625112/744dd5d0-03b4-43ba-8720-d6993cacd076
-
-
 
 ## Cite
 
