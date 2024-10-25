@@ -8,13 +8,19 @@ import numpy as np
 
 import mne
 
-from RVGP.geometry import compute_laplacian, project_to_local_frame
+from RVGP.geometry import compute_laplacian
 from RVGP.smoothing import vector_diffusion
 from RVGP.plotting import graph
 import RVGP
 
 from scipy.spatial import KDTree
 from tqdm import tqdm
+
+def project_to_local_frame(x, gauges, reverse=False):
+    if reverse:
+        return np.einsum("bji,bi->bj", gauges, x)
+    else:
+        return np.einsum("bij,bi->bj", gauges, x)
 
 
 def interpolate_time_range(timepoints, X, f, train_idx, test_idx,):

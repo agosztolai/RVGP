@@ -13,7 +13,7 @@ from sklearn.metrics import pairwise_distances
 # =============================================================================
 n_eigenpairs=100
 n_neighbors=10
-vertices, faces = load_mesh('bunny') #see /examples/data for more objects
+vertices, faces = load_mesh('bunny',folder='../data') #see /examples/data for more objects
 
 # =============================================================================
 # Subsample 

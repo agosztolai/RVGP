@@ -30,6 +30,7 @@ def find_mat_files(directory):
 
 directory = '../data/eeg_data/' # Replace with your directory path or load the data into the correct folder
 mat_files = find_mat_files(directory)
+print(mat_files)
 
 
 
@@ -38,7 +39,7 @@ mat_files = find_mat_files(directory)
 # =============================================================================
 
 for patient_id, folder in mat_files.items():
-
+    print(patiend_id)
 
     # load data
     vectors_ds, vectors_si, vectors_gt, channel_locations_gt, channel_locations_ds = load_eeg_data(folder ,

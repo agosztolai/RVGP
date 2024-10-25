@@ -28,10 +28,28 @@ If you find this package useful or inspirational, please cite our work as follow
 
 ## Installation
 
-Create a new Anaconda environment. Then, install by running inside the main folder
+Create a new Anaconda environment.
 
 ```
-pip install numpy cython scipy
+conda create -n RVGP python=3.8
+```
+
+Install GpFlow 2.0
+
+```
+pip install gpflow tensorflow~=2.10.0 tensorflow-probability~=0.18.0
+```
+
+On Apple Silicon chips, 
+
+```
+pip install gpflow tensorflow-macos==2.10 tensorflow-probability~=0.18.0
+```
+
+Then, install by running inside the main folder
+
+```
+pip install -r requirements.txt
 pip install -e .
 ```
 
