@@ -4,6 +4,10 @@
 import numpy as np
 
 import os
+import wget
+import requests
+import subprocess
+
 from scipy.io import savemat
 
 from eeg_utils import load_eeg_data, compute_error_time
@@ -11,6 +15,36 @@ from eeg_utils import interpolate_time_range
 from eeg_utils import compute_vectorfield_features_time
 
 np.random.seed(0)
+
+# =============================================================================
+# Download EEG vector field data
+# =============================================================================
+
+# Define the directory and URL
+directory = "./data"
+
+# Example data of patients (already in vector field format)
+files = {'s1':'https://dataverse.harvard.edu/api/access/datafile/10649581',
+         's2':'https://dataverse.harvard.edu/api/access/datafile/10649580',
+         's5':'https://dataverse.harvard.edu/api/access/datafile/10649579'}
+
+
+# if the below doesn't work then just download from the URLs manually.
+for patient_id in files.keys():
+    
+    sub_directory = os.path.join(directory, f"{patient_id}")
+    os.makedirs(sub_directory, exist_ok=True)
+
+    file_path = os.path.join(sub_directory, "obj_flows.mat")
+    url = files[patient_id]
+
+    # Check if the file already exists before downloading
+    if not os.path.exists(file_path):
+        print(f"Downloading {url} using wget...")
+        subprocess.run(["wget", "-nc", url, "-O", file_path])
+        print(f"File saved to {file_path}")
+    else:
+        print(f"File {file_path} already exists. Skipping download.")
 
 # =============================================================================
 # Load EEG vector field data
@@ -28,10 +62,8 @@ def find_mat_files(directory):
                     mat_files[subdirectory_name] = root +  '/'
     return mat_files
 
-directory = '../data/eeg_data/' # Replace with your directory path or load the data into the correct folder
+directory = './data/' # Replace with your directory path or load the data into the correct folder
 mat_files = find_mat_files(directory)
-print(mat_files)
-
 
 
 # =============================================================================
@@ -39,7 +71,7 @@ print(mat_files)
 # =============================================================================
 
 for patient_id, folder in mat_files.items():
-    print(patiend_id)
+
 
     # load data
     vectors_ds, vectors_si, vectors_gt, channel_locations_gt, channel_locations_ds = load_eeg_data(folder ,
